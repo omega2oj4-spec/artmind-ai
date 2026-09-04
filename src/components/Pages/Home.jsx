@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import './Home.css';
 
 const TypewriterText = ({ text, delay = 0 }) => {
   const [displayedText, setDisplayedText] = useState('');
   
   useEffect(() => {
-    let i = 0;
     let timer;
     setDisplayedText('');
     
@@ -48,42 +47,111 @@ const CarouselItem = ({ art }) => {
   );
 };
 
+// Helper function for natural language search simulation
+function performNLSearch(query, artworks) {
+  if (!query || !query.trim()) return artworks;
+  
+  const lowerQuery = query.toLowerCase();
+  
+  // Basic NLP tokenization - remove common stop words and punctuation
+  const stopWords = ['show', 'find', 'me', 'with', 'the', 'a', 'an', 'in', 'of', 'on', 'some', 'all', 'pictures', 'images', 'art', 'artworks', 'paintings', 'painting', 'theme', 'themes', 'like'];
+  const words = lowerQuery.replace(/[.,!?]/g, '').split(/\s+/);
+  
+  const keywords = words.filter(word => !stopWords.includes(word) && word.length > 2);
+  
+  // If only stop words were entered, just return everything
+  if (keywords.length === 0) return artworks;
+  
+  // Score artworks based on keyword matches
+  const scoredArtworks = artworks.map(art => {
+    let score = 0;
+    const searchString = `${art.title} ${art.artist} ${(art.tags || []).join(' ')}`.toLowerCase();
+    
+    keywords.forEach(keyword => {
+      if (searchString.includes(keyword)) {
+        score += 1; // Basic match
+        // Give higher weight to title/artist matches
+        if (art.title.toLowerCase().includes(keyword) || art.artist.toLowerCase().includes(keyword)) {
+          score += 2;
+        }
+      }
+    });
+    return { art, score };
+  });
+  
+  // Filter out zero scores and sort by score descending
+  const filtered = scoredArtworks.filter(item => item.score > 0).sort((a, b) => b.score - a.score);
+  
+  return filtered.map(item => item.art);
+}
+
 export default function Home() {
   const artworks = [
     {
       src: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop",
       title: "Sunflowers",
-      artist: "Vincent van Gogh"
+      artist: "Vincent van Gogh",
+      tags: ["oil", "nature", "flowers", "yellow", "post-impressionism", "floral"]
     },
     {
       src: "https://cdn.dribbble.com/userupload/48815862/file/c1a2afe1b81a13a91c1ab0a19b92764a.jpg?crop=0x487-4961x4207&format=webp&resize=640x480&vertical=center",
       title: "The Persistence of Memory",
-      artist: "Salvador Dalí"
+      artist: "Salvador Dalí",
+      tags: ["oil", "surrealism", "clocks", "landscape", "dream", "time"]
     },
     {
       src: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?q=80&w=600&auto=format&fit=crop",
       title: "The Scream",
-      artist: "Edvard Munch"
+      artist: "Edvard Munch",
+      tags: ["oil", "expressionism", "portrait", "sunset", "anxiety", "bridge"]
     },
     {
       src: "https://cdn.dribbble.com/userupload/46119240/file/09f542f4f374a36c7cee4f668d183ad6.jpg?format=webp&resize=640x480&vertical=center",
       title: "Wanderer above the Sea of Fog",
-      artist: "Caspar David Friedrich"
+      artist: "Caspar David Friedrich",
+      tags: ["oil", "romanticism", "landscape", "nature", "mountains", "fog", "man"]
     },
     {
       src: "https://images.unsplash.com/photo-1578301978018-3005759f48f7?q=80&w=600&auto=format&fit=crop",
       title: "The Starry Night",
-      artist: "Vincent van Gogh"
+      artist: "Vincent van Gogh",
+      tags: ["oil", "landscape", "night", "stars", "nature", "post-impressionism", "village"]
     },
     {
       src: "https://cdn.dribbble.com/userupload/48847961/file/30ea1d838eb96c908387382c8d122cd9.jpg?format=webp&resize=640x480&vertical=center",
       title: "Girl with a Pearl Earring",
-      artist: "Johannes Vermeer"
+      artist: "Johannes Vermeer",
+      tags: ["oil", "portrait", "baroque", "girl", "earring", "blue"]
+    },
+    {
+      src: "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?q=80&w=600&auto=format&fit=crop",
+      title: "Misty Mountains",
+      artist: "Unknown",
+      tags: ["watercolor", "landscape", "mountains", "nature", "mist", "forest"]
     }
   ];
 
-  // Tripled array for seamless infinite looping
-  const carouselImages = [...artworks, ...artworks, ...artworks]; 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const searchSuggestions = [
+    "Oil paintings",
+    "Watercolor landscapes",
+    "Post-impressionism art",
+    "Surrealism and dreams",
+    "Nature themes",
+    "Famous portraits"
+  ];
+  
+  // Memoize search results so it doesn't recalculate on every animation frame
+  const filteredArtworks = useMemo(() => performNLSearch(searchQuery, artworks), [searchQuery]);
+  const shouldInfiniteScroll = filteredArtworks.length > 2;
+
+  // Tripled array for seamless infinite looping if more than 2 items. Otherwise, show as is.
+  const carouselImages = shouldInfiniteScroll 
+    ? [...filteredArtworks, ...filteredArtworks, ...filteredArtworks]
+    : filteredArtworks;
+
   const scrollRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
@@ -97,7 +165,8 @@ export default function Home() {
     let animationFrameId;
 
     const scroll = () => {
-      if (scrollRef.current && !isPausedRef.current) {
+      // Only auto-scroll if we have more than 2 items
+      if (scrollRef.current && !isPausedRef.current && shouldInfiniteScroll) {
         scrollRef.current.scrollLeft += 1; // Speed of continuous scroll
         
         // Reset scroll position to create infinite loop
@@ -109,31 +178,85 @@ export default function Home() {
       animationFrameId = requestAnimationFrame(scroll);
     };
 
-    animationFrameId = requestAnimationFrame(scroll);
+    if (shouldInfiniteScroll) {
+      animationFrameId = requestAnimationFrame(scroll);
+    }
 
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []);
+    return () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+  }, [shouldInfiniteScroll, carouselImages.length]);
 
   return (
     <main className="home-container">
       <div className="hero-content">
-        <h1 className="hero-title">Explore a world where ideas move<br/>beyond the screen</h1>
-        <p className="hero-subtitle">Spatial thinking used to test clarity and intent before design decisions are locked.</p>
+        <h1 className="hero-title">
+          <TypewriterText text="Explore a world where ideas move" /><br/>
+          <TypewriterText text="beyond the screen" delay={1300} />
+        </h1>
+        <p className="hero-subtitle">
+          <TypewriterText text="Spatial thinking used to test clarity and intent before design decisions are locked." delay={2100} />
+        </p>
+        
+        <form className="search-container" onSubmit={(e) => e.preventDefault()}>
+          <div className="search-input-wrapper">
+            <input 
+              type="text" 
+              className="nl-search-input" 
+              placeholder="Try: 'Show oil paintings with nature themes' or 'watercolor landscape'"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearchFocused(true);
+              }}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
+            {isSearchFocused && (
+              <div className="search-suggestions">
+                <p className="suggestions-title">Try searching for:</p>
+                <ul>
+                  {searchSuggestions.map((suggestion, idx) => (
+                    <li 
+                      key={idx} 
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // prevents input from losing focus before click resolves
+                        setSearchQuery(suggestion);
+                        setIsSearchFocused(false);
+                      }}
+                    >
+                      {suggestion}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <button type="submit" className="nl-search-btn" aria-label="Search">
+            Search
+          </button>
+        </form>
       </div>
 
       <div className="carousel-wrapper manual-carousel">
-        <div 
-          className="carousel-viewport smooth-scroller" 
-          ref={scrollRef}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          <div className="carousel-track-continuous">
-            {carouselImages.map((art, index) => (
-              <CarouselItem art={art} key={index} />
-            ))}
+        {filteredArtworks.length > 0 ? (
+          <div 
+            className="carousel-viewport smooth-scroller" 
+            ref={scrollRef}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            <div className={`carousel-track-continuous ${!shouldInfiniteScroll ? 'centered-track' : ''}`}>
+              {carouselImages.map((art, index) => (
+                <CarouselItem art={art} key={index} />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="empty-search-state">
+            <p>No artworks found matching your vision. Try rephrasing!</p>
+          </div>
+        )}
       </div>
     </main>
   );
