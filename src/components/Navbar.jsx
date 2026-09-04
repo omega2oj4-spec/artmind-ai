@@ -24,7 +24,9 @@ export default function Navbar() {
           <li><Link to="/Gallery" onClick={() => setIsOpen(false)}>Gallery</Link></li>
           <li><Link to="/Dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
           <li><Link to="/Login" onClick={() => setIsOpen(false)}>Login</Link></li>
-          <li><Link to="/Register" onClick={() => setIsOpen(false)}>Register</Link></li>
+          <li><Link to="/AI vision" onClick={() => setIsOpen(false)}>AI Vision</Link></li>
+          <li><Link to="/Analytics" onClick={() => setIsOpen(false)}>Analytics</Link></li>
+          
           <li className="mobile-only-btn">
             <button className="navbar-contact-btn">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
