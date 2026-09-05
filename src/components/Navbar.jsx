@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext.jsx';
 import './Navbar.css';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleNavClick = (e, targetId) => {
@@ -20,6 +22,12 @@ export default function Navbar() {
       const el = document.getElementById(targetId);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+    navigate('/');
   };
 
   return (
@@ -39,10 +47,23 @@ export default function Navbar() {
         <ul className={`navbar-links ${isOpen ? 'active' : ''}`}>
           <li><a href="#home" onClick={(e) => handleNavClick(e, 'home')}>Home</a></li>
           <li><a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>Gallery</a></li>
+          <li><Link to="/search" onClick={() => setIsOpen(false)}>Search</Link></li>
           <li><Link to="/Dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
-          <li><Link to="/Login" onClick={() => setIsOpen(false)}>Login</Link></li>
           <li><Link to="/AI vision" onClick={() => setIsOpen(false)}>AI Vision</Link></li>
           <li><Link to="/Analytics" onClick={() => setIsOpen(false)}>Analytics</Link></li>
+          
+          {user ? (
+            <li>
+              <button 
+                onClick={handleLogout} 
+                style={{ background: 'transparent', border: 'none', color: '#d4af37', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', fontWeight: '500' }}
+              >
+                Logout ({user.name.split(' ')[0]})
+              </button>
+            </li>
+          ) : (
+            <li><Link to="/Login" onClick={() => setIsOpen(false)}>Login</Link></li>
+          )}
           
           <li className="mobile-only-btn">
             <button className="navbar-contact-btn">

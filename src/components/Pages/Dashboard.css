@@ -1,0 +1,106 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 24px 80px;
+}
+
+.dashboard-header {
+  background: #ffffff;
+  border: 1px solid #e8e2d5;
+  border-radius: 16px;
+  padding: 28px 36px;
+  box-shadow: 0 8px 24px rgba(26, 25, 24, 0.05);
+  margin-bottom: 40px;
+}
+
+.dashboard-user-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-avatar-icon {
+  font-size: 3.5rem;
+  color: #d4af37;
+}
+
+.user-meta h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.9rem;
+  color: #1a1918;
+  margin: 0 0 4px 0;
+}
+
+.user-meta p {
+  color: #777777;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.dashboard-section .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dashboard-section .section-header h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem;
+  color: #1a1918;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-desc {
+  color: #777777;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.category-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-cat-pill {
+  background: #fdfbf7;
+  border: 1px solid #d4af37;
+  color: #1a1918;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.dashboard-cat-pill:hover {
+  background: #1a1918;
+  color: #d4af37;
+  border-color: #1a1918;
+}
+
+.empty-dashboard-state {
+  background: #fdfbf7;
+  border: 1px dashed #e8e2d5;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #777777;
+}
+
+.empty-dashboard-state a {
+  color: #d4af37;
+  font-weight: 600;
+  text-decoration: underline;
+}

@@ -1,0 +1,134 @@
+.auth-page-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 140px 20px 80px;
+}
+
+.auth-card {
+  background: #ffffff;
+  border: 1px solid #e8e2d5;
+  border-radius: 16px;
+  padding: 36px 32px;
+  box-shadow: 0 12px 36px rgba(26, 25, 24, 0.08);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-header h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.8rem;
+  color: #1a1918;
+  margin: 0 0 8px 0;
+}
+
+.auth-header p {
+  color: #777777;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.auth-error-alert {
+  background: #fde8e8;
+  border: 1px solid #f8b4b4;
+  color: #9b1c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1a1918;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #8c7355;
+  font-size: 0.95rem;
+}
+
+.auth-input-wrapper input {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  border: 1px solid #e8e2d5;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.auth-input-wrapper input:focus {
+  border-color: #d4af37;
+}
+
+.auth-submit-btn {
+  background: #1a1918;
+  color: #d4af37;
+  border: 1px solid #d4af37;
+  padding: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.98rem;
+  cursor: pointer;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background: #2c2a29;
+  transform: translateY(-2px);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-footer-link {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #f0eae1;
+}
+
+.auth-footer-link p {
+  color: #666666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.auth-footer-link a {
+  color: #d4af37;
+  font-weight: 600;
+  text-decoration: underline;
+}
