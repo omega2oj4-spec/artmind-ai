@@ -153,8 +153,16 @@ export default function Home() {
     : filteredArtworks;
 
   const scrollRef = useRef(null);
+  const carouselWrapperRef = useRef(null);
   const [isPaused, setIsPaused] = useState(false);
   const isPausedRef = useRef(false);
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (carouselWrapperRef.current) {
+      carouselWrapperRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // Keep a ref of isPaused up to date for the requestAnimationFrame loop
   useEffect(() => {
@@ -188,7 +196,7 @@ export default function Home() {
   }, [shouldInfiniteScroll, carouselImages.length]);
 
   return (
-    <main className="home-container">
+    <main className="home-container" id="home">
       <div className="hero-content">
         <h1 className="hero-title">
           <TypewriterText text="Explore a world where ideas move" /><br/>
@@ -198,7 +206,7 @@ export default function Home() {
           <TypewriterText text="Spatial thinking used to test clarity and intent before design decisions are locked." delay={2100} />
         </p>
         
-        <form className="search-container" onSubmit={(e) => e.preventDefault()}>
+        <form className="search-container" onSubmit={handleSearch}>
           <div className="search-input-wrapper">
             <input 
               type="text" 
@@ -223,6 +231,7 @@ export default function Home() {
                         e.preventDefault(); // prevents input from losing focus before click resolves
                         setSearchQuery(suggestion);
                         setIsSearchFocused(false);
+                        handleSearch();
                       }}
                     >
                       {suggestion}
@@ -238,7 +247,7 @@ export default function Home() {
         </form>
       </div>
 
-      <div className="carousel-wrapper manual-carousel">
+      <div className="carousel-wrapper manual-carousel" ref={carouselWrapperRef}>
         {filteredArtworks.length > 0 ? (
           <div 
             className="carousel-viewport smooth-scroller" 

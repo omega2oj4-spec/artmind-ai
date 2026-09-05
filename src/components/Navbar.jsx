@@ -1,14 +1,31 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNavClick = (e, targetId) => {
+    e.preventDefault();
+    setIsOpen(false);
+    
+    if (window.location.pathname !== '/') {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const el = document.getElementById(targetId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="navbar-container">
       <nav className="navbar">
-        <Link to="/" className="navbar-logo">
+        <Link to="/" className="navbar-logo" onClick={(e) => handleNavClick(e, 'home')}>
           <span className="navbar-logo-script">Art Mind</span>
           <span className="navbar-logo-sub">AI Portal</span>
         </Link>
@@ -20,8 +37,8 @@ export default function Navbar() {
         </div>
         
         <ul className={`navbar-links ${isOpen ? 'active' : ''}`}>
-          <li><Link to="/" onClick={() => setIsOpen(false)}>Home</Link></li>
-          <li><Link to="/Gallery" onClick={() => setIsOpen(false)}>Gallery</Link></li>
+          <li><a href="#home" onClick={(e) => handleNavClick(e, 'home')}>Home</a></li>
+          <li><a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>Gallery</a></li>
           <li><Link to="/Dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
           <li><Link to="/Login" onClick={() => setIsOpen(false)}>Login</Link></li>
           <li><Link to="/AI vision" onClick={() => setIsOpen(false)}>AI Vision</Link></li>
