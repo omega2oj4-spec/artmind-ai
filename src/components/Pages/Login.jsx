@@ -39,7 +39,7 @@ export default function Login() {
 
       login(data.token, data.user);
       window.scrollTo(0, 0);
-      navigate('/home');
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

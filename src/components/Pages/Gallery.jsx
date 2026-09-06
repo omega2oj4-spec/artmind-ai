@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PaintingCard from '../PaintingCard.jsx';
 import { FaFilter, FaLayerGroup, FaSearch, FaPalette, FaCompass } from 'react-icons/fa';
+import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import './Gallery.css';
 
 const CATEGORIES = ['All', 'Abstract', 'Landscape', 'Flower', 'Nature', 'Figurative', 'Religious'];
@@ -64,9 +65,27 @@ export default function Gallery() {
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load gallery paintings');
       const data = await res.json();
-      setPaintings(data);
+      const galleryPaintings = Array.isArray(data) && data.length > 0
+        ? data
+        : getHomeGalleryArtworks({
+            category: selectedPaintingType !== 'All Types' ? selectedPaintingType : activeCategory,
+            surface: selectedSurface,
+            colorMedium: selectedColorMedium === 'All Mediums' ? 'All Color Media' : selectedColorMedium,
+            style: selectedStyle,
+            minPopularity: selectedPopularity,
+            search: searchQuery
+          });
+      setPaintings(galleryPaintings);
     } catch (err) {
       console.error('Error loading gallery:', err);
+      setPaintings(getHomeGalleryArtworks({
+        category: selectedPaintingType !== 'All Types' ? selectedPaintingType : activeCategory,
+        surface: selectedSurface,
+        colorMedium: selectedColorMedium === 'All Mediums' ? 'All Color Media' : selectedColorMedium,
+        style: selectedStyle,
+        minPopularity: selectedPopularity,
+        search: searchQuery
+      }));
     } finally {
       setLoading(false);
     }

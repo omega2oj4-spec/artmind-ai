@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaPaperPlane, FaRobot, FaCamera, FaPlus } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import PaintingCard from './PaintingCard.jsx';
 import './ChatBot.css';
 
 export default function ChatBot() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -17,6 +18,10 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  if (['/', '/login', '/Login', '/register', '/Register'].includes(location.pathname)) {
+    return null;
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

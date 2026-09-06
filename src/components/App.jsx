@@ -16,6 +16,7 @@ import Analytics from './Pages/Analytics.jsx';
 
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
+import ChatBot from './ChatBot.jsx';
 
 function App() {
   return (
@@ -34,7 +35,6 @@ function App() {
               </>
             } />
             <Route path="/gallery" element={<Gallery />} />
-            <Route path="*" element={<Navigate to="/register" replace />} />
             <Route path="/painting/:id" element={<PaintingDetails />} />
             <Route path="/search" element={<Search />} />
             
@@ -52,8 +52,10 @@ function App() {
 
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/Analytics" element={<Analytics />} />
+            <Route path="*" element={<Navigate to="/register" replace />} />
           </Routes>
           <Footer />
+          <ChatBot />
         </div>
       </Router>
     </AuthProvider>
