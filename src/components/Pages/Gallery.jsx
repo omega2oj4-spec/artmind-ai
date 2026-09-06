@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PaintingCard from '../PaintingCard.jsx';
-import { FaFilter, FaLayerGroup, FaSearch, FaPalette } from 'react-icons/fa';
+import { FaFilter, FaLayerGroup, FaSearch, FaPalette, FaCompass } from 'react-icons/fa';
 import './Gallery.css';
 
 const CATEGORIES = ['All', 'Abstract', 'Landscape', 'Flower', 'Nature', 'Figurative', 'Religious'];
 
 export default function Gallery() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [paintings, setPaintings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || 'All');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState('All Styles');
+  const [selectedStyle, setSelectedStyle] = useState(searchParams.get('style') || 'All Styles');
+  const [selectedSurface, setSelectedSurface] = useState(searchParams.get('surface') || 'All Surfaces');
+  const [selectedColorMedium, setSelectedColorMedium] = useState(searchParams.get('colorMedium') || 'All Mediums');
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat && cat !== activeCategory) {
+      setActiveCategory(cat);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPaintings();
-  }, [activeCategory, selectedStyle]);
+  }, [activeCategory, selectedStyle, selectedSurface, selectedColorMedium]);
 
   const fetchPaintings = async () => {
     setLoading(true);
@@ -23,6 +35,8 @@ export default function Gallery() {
       let url = '/api/paintings?';
       if (activeCategory !== 'All') url += `category=${encodeURIComponent(activeCategory)}&`;
       if (selectedStyle !== 'All Styles') url += `style=${encodeURIComponent(selectedStyle)}&`;
+      if (selectedSurface !== 'All Surfaces') url += `surface=${encodeURIComponent(selectedSurface)}&`;
+      if (selectedColorMedium !== 'All Mediums') url += `colorMedium=${encodeURIComponent(selectedColorMedium)}&`;
       if (searchQuery.trim()) url += `search=${encodeURIComponent(searchQuery.trim())}&`;
 
       const res = await fetch(url);
@@ -36,6 +50,17 @@ export default function Gallery() {
     }
   };
 
+  const handleCategoryChange = (cat) => {
+    setActiveCategory(cat);
+    const newParams = new URLSearchParams(searchParams);
+    if (cat === 'All') {
+      newParams.delete('category');
+    } else {
+      newParams.set('category', cat);
+    }
+    setSearchParams(newParams);
+  };
+
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     fetchPaintings();
@@ -46,7 +71,7 @@ export default function Gallery() {
       <div className="gallery-header">
         <h1 className="gallery-title">Smart Art Gallery</h1>
         <p className="gallery-subtitle">
-          Discover public domain fine art curated from the Art Institute of Chicago, filtered by categories, artistic styles, and medium types.
+          Discover public domain fine art curated from the Art Institute of Chicago, filtered by categories, artistic styles, surface, and color medium.
         </p>
       </div>
 
@@ -73,7 +98,7 @@ export default function Gallery() {
               <button 
                 key={cat}
                 className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
               >
                 {cat === 'All' && <FaLayerGroup style={{ marginRight: '6px' }} />}
                 {cat}
@@ -106,6 +131,30 @@ export default function Gallery() {
                   <option>Renaissance</option>
                   <option>Realism</option>
                   <option>Modern Art</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label><FaCompass style={{ marginRight: '6px' }} /> Surface</label>
+                <select value={selectedSurface} onChange={(e) => setSelectedSurface(e.target.value)}>
+                  <option>All Surfaces</option>
+                  <option>Canvas</option>
+                  <option>Paper</option>
+                  <option>Wood Panel</option>
+                  <option>Board</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label><FaPalette style={{ marginRight: '6px' }} /> Color Medium</label>
+                <select value={selectedColorMedium} onChange={(e) => setSelectedColorMedium(e.target.value)}>
+                  <option>All Mediums</option>
+                  <option>Oil</option>
+                  <option>Watercolor</option>
+                  <option>Pastel</option>
+                  <option>Acrylic</option>
+                  <option>Tempera</option>
+                  <option>Ink</option>
                 </select>
               </div>
             </div>

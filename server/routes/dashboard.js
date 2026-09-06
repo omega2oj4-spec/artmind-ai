@@ -85,22 +85,28 @@ router.get('/', optionalAuth, async (req, res) => {
     const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
     const favoriteCategories = sortedCategories.length > 0 ? sortedCategories : ['Abstract', 'Landscape', 'Flower', 'Nature'];
 
-    // 3. Recommendation Scoring Algorithm in Plain JavaScript
+    // 3. Recommendation Scoring Algorithm
     // Criteria:
-    // - Same style as user's favorites/views: +2
-    // - Overlapping tags: +1
-    // - Same medium: +1
     // - User's preferred category: +2
+    // - Same style as user's favorites/views: +2
+    // - Same color medium or medium: +1
+    // - Preferred color theme: +1
     // - High popularity: +1
     const favStyles = new Set((user?.favorites || []).map(p => p.style).filter(Boolean));
-    const favMediums = new Set((user?.favorites || []).map(p => p.medium).filter(Boolean));
+    const favMediums = new Set((user?.favorites || []).map(p => p.colorMedium || p.medium).filter(Boolean));
+    const favColorThemes = new Set((user?.favorites || []).map(p => p.colorTheme).filter(Boolean));
+    (user?.viewHistory || []).forEach(v => {
+      if (v.painting && v.painting.colorTheme) favColorThemes.add(v.painting.colorTheme);
+      if (v.painting && v.painting.style) favStyles.add(v.painting.style);
+    });
     const favCategories = new Set(favoriteCategories);
 
     const scored = allPaintings.map(painting => {
       let score = 0;
       if (favCategories.has(painting.category)) score += 2;
       if (favStyles.has(painting.style)) score += 2;
-      if (favMediums.has(painting.medium)) score += 1;
+      if (favMediums.has(painting.colorMedium) || favMediums.has(painting.medium)) score += 1;
+      if (favColorThemes.has(painting.colorTheme)) score += 1;
       if (painting.popularity > 50) score += 1;
 
       // Small random jitter for variety

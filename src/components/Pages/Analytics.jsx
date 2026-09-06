@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaChartLine, FaEye, FaAward, FaLayerGroup } from 'react-icons/fa';
+import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import './Analytics.css';
 
@@ -8,7 +8,8 @@ export default function Analytics() {
     topPaintings: [],
     categoryStats: [],
     totalViews: 0,
-    totalArtworks: 0
+    totalArtworks: 0,
+    userStats: null
   });
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +20,11 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/analytics/trending');
+      const token = localStorage.getItem('artmind_token');
+      const headers = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch('/api/analytics/trending', { headers });
       if (!res.ok) throw new Error('Analytics load failed');
       const data = await res.json();
       setAnalytics(data);
@@ -47,6 +52,41 @@ export default function Analytics() {
         </div>
       ) : (
         <>
+          {/* Personalized User Insights Section (when authenticated) */}
+          {analytics.userStats && (
+            <section className="analytics-section personalized-analytics-box" style={{ background: 'rgba(212, 175, 55, 0.08)', padding: '24px', borderRadius: '12px', marginBottom: '36px', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+              <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaUserCheck color="#d4af37" /> Personalized Behavior & AI Insights for {analytics.userStats.userName}
+              </h2>
+              <div className="analytics-stats-banner" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '16px' }}>
+                <div className="stat-box">
+                  <FaEye className="stat-icon" />
+                  <div className="stat-data">
+                    <span className="stat-number">{analytics.userStats.totalUserViews}</span>
+                    <span className="stat-label">Artworks Viewed</span>
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <FaLayerGroup className="stat-icon" />
+                  <div className="stat-data">
+                    <span className="stat-number">{analytics.userStats.topCategory}</span>
+                    <span className="stat-label">Top Affinity Category</span>
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <FaAward className="stat-icon" />
+                  <div className="stat-data">
+                    <span className="stat-number">{analytics.userStats.topStyle}</span>
+                    <span className="stat-label">Favorite Art Style</span>
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontStyle: 'italic', color: '#e0e0e0', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FaMagic color="#d4af37" /> {analytics.userStats.personalizedInsight}
+              </p>
+            </section>
+          )}
+
           {/* High-level stats banner */}
           <div className="analytics-stats-banner">
             <div className="stat-box">

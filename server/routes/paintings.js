@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const { category, style, search } = req.query;
+    const { category, style, surface, colorMedium, search } = req.query;
     const filter = {};
 
     if (category && category !== 'All') {
@@ -20,6 +20,12 @@ router.get('/', async (req, res) => {
     }
     if (style && style !== 'All Styles') {
       filter.style = style;
+    }
+    if (surface && surface !== 'All Surfaces') {
+      filter.surface = surface;
+    }
+    if (colorMedium && colorMedium !== 'All Mediums') {
+      filter.colorMedium = colorMedium;
     }
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
