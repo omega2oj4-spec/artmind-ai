@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PaintingCard from '../PaintingCard.jsx';
 import { FaFilter, FaLayerGroup, FaSearch, FaPalette, FaCompass } from 'react-icons/fa';
@@ -17,6 +17,10 @@ export default function Gallery() {
   const [selectedStyle, setSelectedStyle] = useState(searchParams.get('style') || 'All Styles');
   const [selectedSurface, setSelectedSurface] = useState(searchParams.get('surface') || 'All Surfaces');
   const [selectedColorMedium, setSelectedColorMedium] = useState(searchParams.get('colorMedium') || 'All Mediums');
+  const [selectedPaintingType, setSelectedPaintingType] = useState('All Types');
+  const [selectedPopularity, setSelectedPopularity] = useState('Any Popularity');
+  const [scrollToCategoryResults, setScrollToCategoryResults] = useState(false);
+  const resultsRef = useRef(null);
 
   useEffect(() => {
     const cat = searchParams.get('category');
@@ -27,7 +31,23 @@ export default function Gallery() {
 
   useEffect(() => {
     fetchPaintings();
-  }, [activeCategory, selectedStyle, selectedSurface, selectedColorMedium]);
+  }, [activeCategory, selectedStyle, selectedSurface, selectedColorMedium, selectedPaintingType, selectedPopularity]);
+
+  useEffect(() => {
+    const paintingId = window.location.hash.slice(1);
+    if (!paintingId || !document.getElementById(paintingId)) return;
+
+    requestAnimationFrame(() => {
+      document.getElementById(paintingId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [paintings]);
+
+  useEffect(() => {
+    if (!scrollToCategoryResults || loading) return;
+
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setScrollToCategoryResults(false);
+  }, [loading, paintings, scrollToCategoryResults]);
 
   const fetchPaintings = async () => {
     setLoading(true);
@@ -38,6 +58,8 @@ export default function Gallery() {
       if (selectedSurface !== 'All Surfaces') url += `surface=${encodeURIComponent(selectedSurface)}&`;
       if (selectedColorMedium !== 'All Mediums') url += `colorMedium=${encodeURIComponent(selectedColorMedium)}&`;
       if (searchQuery.trim()) url += `search=${encodeURIComponent(searchQuery.trim())}&`;
+      if (selectedPaintingType !== 'All Types') url += `paintingType=${encodeURIComponent(selectedPaintingType)}&`;
+      if (selectedPopularity !== 'Any Popularity') url += `minPopularity=${encodeURIComponent(selectedPopularity)}&`;
 
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load gallery paintings');
@@ -64,6 +86,11 @@ export default function Gallery() {
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
     fetchPaintings();
+  };
+
+  const handleCategorySelect = (category) => {
+    setActiveCategory(category);
+    setScrollToCategoryResults(true);
   };
 
   return (
@@ -98,7 +125,7 @@ export default function Gallery() {
               <button 
                 key={cat}
                 className={`category-btn ${activeCategory === cat ? 'active' : ''}`}
-                onClick={() => handleCategoryChange(cat)}
+                onClick={() => handleCategorySelect(cat)}
               >
                 {cat === 'All' && <FaLayerGroup style={{ marginRight: '6px' }} />}
                 {cat}
@@ -119,6 +146,35 @@ export default function Gallery() {
           <div className="gallery-filters-container">
             <div className="gallery-filters">
               <div className="filter-item">
+                <label><FaLayerGroup style={{ marginRight: '6px' }} /> Painting Type</label>
+                <select value={selectedPaintingType} onChange={(e) => setSelectedPaintingType(e.target.value)}>
+                  <option>All Types</option>
+                  {CATEGORIES.slice(1).map((type) => <option key={type}>{type}</option>)}
+                </select>
+              </div>
+              <div className="filter-item">
+                <label><FaCompass style={{ marginRight: '6px' }} /> Surface</label>
+                <select value={selectedSurface} onChange={(e) => setSelectedSurface(e.target.value)}>
+                  <option>All Surfaces</option>
+                  <option>Canvas</option>
+                  <option>Paper</option>
+                  <option>Wood Panel</option>
+                  <option>Board</option>
+                </select>
+              </div>
+              <div className="filter-item">
+                <label><FaPalette style={{ marginRight: '6px' }} /> Color Medium</label>
+                <select value={selectedColorMedium} onChange={(e) => setSelectedColorMedium(e.target.value)}>
+                  <option>All Mediums</option>
+                  <option>Oil</option>
+                  <option>Watercolor</option>
+                  <option>Pastel</option>
+                  <option>Acrylic</option>
+                  <option>Ink</option>
+                  <option>Tempera</option>
+                </select>
+              </div>
+              <div className="filter-item">
                 <label><FaPalette style={{ marginRight: '6px' }} /> Artistic Style</label>
                 <select value={selectedStyle} onChange={(e) => setSelectedStyle(e.target.value)}>
                   <option>All Styles</option>
@@ -133,28 +189,12 @@ export default function Gallery() {
                   <option>Modern Art</option>
                 </select>
               </div>
-
               <div className="filter-item">
-                <label><FaCompass style={{ marginRight: '6px' }} /> Surface</label>
-                <select value={selectedSurface} onChange={(e) => setSelectedSurface(e.target.value)}>
-                  <option>All Surfaces</option>
-                  <option>Canvas</option>
-                  <option>Paper</option>
-                  <option>Wood Panel</option>
-                  <option>Board</option>
-                </select>
-              </div>
-
-              <div className="filter-item">
-                <label><FaPalette style={{ marginRight: '6px' }} /> Color Medium</label>
-                <select value={selectedColorMedium} onChange={(e) => setSelectedColorMedium(e.target.value)}>
-                  <option>All Mediums</option>
-                  <option>Oil</option>
-                  <option>Watercolor</option>
-                  <option>Pastel</option>
-                  <option>Acrylic</option>
-                  <option>Tempera</option>
-                  <option>Ink</option>
+                <label>Popularity</label>
+                <select value={selectedPopularity} onChange={(e) => setSelectedPopularity(e.target.value)}>
+                  <option value="Any Popularity">Any Popularity</option>
+                  <option value="60">Popular (60+)</option>
+                  <option value="85">Most Popular (85+)</option>
                 </select>
               </div>
             </div>
@@ -162,7 +202,7 @@ export default function Gallery() {
         )}
       </div>
 
-      <div className="gallery-results-info">
+      <div className="gallery-results-info" ref={resultsRef}>
         <p>Showing <strong>{paintings.length}</strong> masterworks in <strong>{activeCategory}</strong></p>
       </div>
 

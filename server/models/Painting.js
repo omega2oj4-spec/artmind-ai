@@ -22,7 +22,10 @@ const paintingSchema = new mongoose.Schema(
     aiSummary: { type: String, default: null },
     colorTheme: { type: String, default: 'Neutral' },
     tags: [{ type: String }],
-    articId: { type: Number, index: true }
+    articId: { type: Number, index: true },
+    sourceName: { type: String, default: '' },
+    sourceUrl: { type: String, default: '' },
+    isPublicDomain: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

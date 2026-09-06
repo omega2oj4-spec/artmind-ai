@@ -8,11 +8,11 @@ const router = express.Router();
 
 /**
  * GET /api/paintings
- * Supports optional ?category= and ?search=
+ * Supports optional category, surface, colorMedium, style, minPopularity, and search filters.
  */
 router.get('/', async (req, res) => {
   try {
-    const { category, style, surface, colorMedium, search } = req.query;
+    const { category, style, surface, colorMedium, minPopularity, search } = req.query;
     const filter = {};
 
     if (category && category !== 'All') {
@@ -24,8 +24,12 @@ router.get('/', async (req, res) => {
     if (surface && surface !== 'All Surfaces') {
       filter.surface = surface;
     }
-    if (colorMedium && colorMedium !== 'All Mediums') {
+    if (colorMedium && colorMedium !== 'All Mediums' && colorMedium !== 'All Color Media') {
       filter.colorMedium = colorMedium;
+    }
+    const popularity = Number.parseInt(minPopularity, 10);
+    if (Number.isFinite(popularity) && popularity >= 0) {
+      filter.popularity = { $gte: popularity };
     }
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
