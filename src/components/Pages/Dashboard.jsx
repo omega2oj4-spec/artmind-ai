@@ -38,7 +38,7 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="dashboard-container">
+    <main id="dashboard" className="dashboard-container">
       <div className="dashboard-header">
         <div className="dashboard-user-card">
           <FaUserCircle className="user-avatar-icon" />
