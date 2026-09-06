@@ -53,7 +53,7 @@ export default function Navbar() {
           <li><a href="#home" onClick={(e) => handleNavClick(e, 'home')}>Home</a></li>
           <li><a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>Gallery</a></li>
           <li><Link to="/search" onClick={() => setIsOpen(false)}>Search</Link></li>
-          <li><Link to="/Dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
+          <li><a href="#dashboard" onClick={(e) => handleNavClick(e, 'dashboard')}>Dashboard</a></li>
           <li><a href="#analytics" onClick={(e) => handleNavClick(e, 'analytics')}>Analytics</a></li>
           
           {user ? (

@@ -27,6 +27,7 @@ function App() {
             <Route path="/" element={<Navigate to="/register" replace />} />
             <Route path="/home" element={
               <>
+                <Dashboard />
                 <Home />
                 <Analytics embedded />
                 <Gallery />
