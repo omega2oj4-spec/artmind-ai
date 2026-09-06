@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.jsx';
 import './Navbar.css';
 
@@ -7,13 +7,18 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (['/login', '/Login', '/register', '/Register', '/'].includes(location.pathname)) {
+    return null;
+  }
 
   const handleNavClick = (e, targetId) => {
     e.preventDefault();
     setIsOpen(false);
     
-    if (window.location.pathname !== '/') {
-      navigate('/');
+    if (window.location.pathname !== '/home') {
+      navigate('/home');
       setTimeout(() => {
         const el = document.getElementById(targetId);
         if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -33,7 +38,7 @@ export default function Navbar() {
   return (
     <div className="navbar-container">
       <nav className="navbar">
-        <Link to="/" className="navbar-logo" onClick={(e) => handleNavClick(e, 'home')}>
+        <Link to="/home" className="navbar-logo" onClick={(e) => handleNavClick(e, 'home')}>
           <span className="navbar-logo-script">Art Mind</span>
           <span className="navbar-logo-sub">AI Portal</span>
         </Link>
@@ -49,8 +54,7 @@ export default function Navbar() {
           <li><a href="#gallery" onClick={(e) => handleNavClick(e, 'gallery')}>Gallery</a></li>
           <li><Link to="/search" onClick={() => setIsOpen(false)}>Search</Link></li>
           <li><Link to="/Dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link></li>
-          <li><Link to="/AI vision" onClick={() => setIsOpen(false)}>AI Vision</Link></li>
-          <li><Link to="/Analytics" onClick={() => setIsOpen(false)}>Analytics</Link></li>
+          <li><a href="#analytics" onClick={(e) => handleNavClick(e, 'analytics')}>Analytics</a></li>
           
           {user ? (
             <li>

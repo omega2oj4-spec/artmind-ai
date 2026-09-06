@@ -141,8 +141,28 @@ background:#3730a3;
   display: none;
 }
 
+@media (max-width: 1024px) and (min-width: 769px) {
+  .navbar-container {
+    padding: 14px 20px;
+  }
+
+  .navbar {
+    padding: 11px 20px;
+  }
+
+  .navbar-links {
+    gap: 20px;
+  }
+}
 
 @media (max-width: 768px) {
+  .navbar-container {
+    padding: 12px 16px;
+  }
+
+  .navbar {
+    padding: 11px 18px;
+  }
   .hamburger {
     display: flex;
   }
@@ -192,5 +212,15 @@ background:#3730a3;
     transform: translateY(0);
     opacity: 1;
     z-index: 10;
+  }
+}
+
+@media (max-width: 380px) {
+  .navbar-container {
+    padding-inline: 10px;
+  }
+
+  .navbar-logo-script {
+    font-size: 1.3rem;
   }
 }

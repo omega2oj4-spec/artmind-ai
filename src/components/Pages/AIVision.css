@@ -246,3 +246,59 @@
   font-size: 0.95rem;
   margin: 0 0 28px 0;
 }
+
+@media (max-width: 768px) {
+  .ai-vision-container {
+    padding: 100px 20px 48px;
+  }
+
+  .vision-title {
+    font-size: 2rem;
+  }
+
+  .upload-dropzone {
+    padding: 32px 18px;
+  }
+
+  .analysis-panel {
+    padding: 22px;
+    margin-bottom: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ai-vision-container {
+    padding-inline: 16px;
+  }
+
+  .vision-title {
+    font-size: 1.7rem;
+    gap: 8px;
+  }
+
+  .vision-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .upload-icon {
+    font-size: 2.8rem;
+  }
+
+  .analyze-submit-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 18px;
+  }
+
+  .analysis-panel {
+    padding: 16px;
+  }
+
+  .panel-title {
+    font-size: 1.3rem;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}

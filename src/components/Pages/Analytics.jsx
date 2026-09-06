@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck } from 'react-icons/fa';
+import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck, FaSyncAlt } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import './Analytics.css';
 
-export default function Analytics() {
+export default function Analytics({ embedded = false }) {
   const [analytics, setAnalytics] = useState({
     topPaintings: [],
     categoryStats: [],
@@ -12,6 +12,8 @@ export default function Analytics() {
     userStats: null
   });
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchAnalytics();
@@ -23,25 +25,33 @@ export default function Analytics() {
       const token = localStorage.getItem('artmind_token');
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
-
+      setError('');
       const res = await fetch('/api/analytics/trending', { headers });
       if (!res.ok) throw new Error('Analytics load failed');
       const data = await res.json();
       setAnalytics(data);
     } catch (err) {
       console.error('Error fetching analytics:', err);
+      setError('Analytics could not be refreshed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const visiblePaintings = selectedCategory === 'All'
+    ? analytics.topPaintings
+    : analytics.topPaintings.filter(painting => painting.category === selectedCategory);
+
   return (
-    <main className="analytics-container">
+    <main id="analytics" className={`analytics-container ${embedded ? 'analytics-embedded' : ''}`}>
       <div className="analytics-header">
         <h1 className="analytics-title"><FaChartLine color="#d4af37" /> Catalog Analytics & Trending Insights</h1>
         <p className="analytics-subtitle">
           Real-time metrics tracking gallery engagement, view counts, popular artwork categories, and trending masterworks.
         </p>
+        <button className="analytics-refresh-btn" type="button" onClick={fetchAnalytics} disabled={loading}>
+          <FaSyncAlt className={loading ? 'analytics-refreshing' : ''} /> Refresh insights
+        </button>
       </div>
 
       {loading ? (
@@ -87,6 +97,10 @@ export default function Analytics() {
             </section>
           )}
 
+          {error && <p className="analytics-error" role="alert">{error}</p>}
+          {analytics.usingBuiltInData && (
+            <p className="analytics-data-note">Showing insights from the gallery collection. Views update as visitors explore artworks.</p>
+          )}
           {/* High-level stats banner */}
           <div className="analytics-stats-banner">
             <div className="stat-box">
@@ -130,8 +144,8 @@ export default function Analytics() {
                   </thead>
                   <tbody>
                     {analytics.categoryStats.map((stat, idx) => (
-                      <tr key={idx}>
-                        <td className="cat-name">{stat._id}</td>
+                      <tr key={idx} className={selectedCategory === stat._id ? 'selected-category-row' : ''}>
+                        <td className="cat-name"><button type="button" onClick={() => setSelectedCategory(stat._id)}>{stat._id}</button></td>
                         <td>{stat.count} Works</td>
                         <td>{stat.totalViews} Views</td>
                         <td>{Math.round(stat.avgPopularity || 0)} Pts</td>
@@ -145,12 +159,16 @@ export default function Analytics() {
 
           {/* Trending Paintings Section */}
           <section className="analytics-section">
-            <h2 className="section-title">Trending Artworks</h2>
+            <div className="analytics-trending-header">
+              <h2 className="section-title">{selectedCategory === 'All' ? 'Trending Artworks' : `Trending ${selectedCategory} Artworks`}</h2>
+              {selectedCategory !== 'All' && <button type="button" className="analytics-clear-filter" onClick={() => setSelectedCategory('All')}>Show all</button>}
+            </div>
             <div className="gallery-grid">
-              {analytics.topPaintings.map(painting => (
+              {visiblePaintings.map(painting => (
                 <PaintingCard key={painting._id} painting={painting} />
               ))}
             </div>
+            {visiblePaintings.length === 0 && <p className="analytics-empty-state">No current top results in this category. Choose another category or show all trends.</p>}
           </section>
         </>
       )}

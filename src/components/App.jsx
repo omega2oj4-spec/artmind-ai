@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import './App.css';
 
@@ -16,7 +16,6 @@ import Analytics from './Pages/Analytics.jsx';
 
 import Navbar from './Navbar.jsx';
 import Footer from './Footer.jsx';
-import ChatBot from './ChatBot.jsx';
 
 function App() {
   return (
@@ -25,13 +24,16 @@ function App() {
         <div className="App">
           <Navbar />
           <Routes>
-            <Route path="/" element={
+            <Route path="/" element={<Navigate to="/register" replace />} />
+            <Route path="/home" element={
               <>
                 <Home />
+                <Analytics embedded />
                 <Gallery />
               </>
             } />
             <Route path="/gallery" element={<Gallery />} />
+            <Route path="*" element={<Navigate to="/register" replace />} />
             <Route path="/painting/:id" element={<PaintingDetails />} />
             <Route path="/search" element={<Search />} />
             
@@ -51,7 +53,6 @@ function App() {
             <Route path="/Analytics" element={<Analytics />} />
           </Routes>
           <Footer />
-          <ChatBot />
         </div>
       </Router>
     </AuthProvider>

@@ -2,6 +2,7 @@ import express from 'express';
 import Painting from '../models/Painting.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { getHomeGalleryArtworks } from '../../src/data/homeArtworks.js';
 
 const router = express.Router();
 
@@ -10,20 +11,33 @@ const router = express.Router();
  */
 router.get('/trending', optionalAuth, async (req, res) => {
   try {
-    const topPaintings = await Painting.find().sort({ viewsCount: -1, popularity: -1 }).limit(8);
+    const databasePaintings = await Painting.find().sort({ viewsCount: -1, popularity: -1 });
 
-    // Aggregate category engagement
-    const categoryStats = await Painting.aggregate([
-      {
-        $group: {
-          _id: '$category',
-          totalViews: { $sum: '$viewsCount' },
-          count: { $sum: 1 },
-          avgPopularity: { $avg: '$popularity' }
-        }
-      },
-      { $sort: { totalViews: -1 } }
-    ]);
+    // Keep analytics useful before the MongoDB catalog has been seeded.
+    const paintings = databasePaintings.length > 0
+      ? databasePaintings
+      : getHomeGalleryArtworks().map((artwork, index) => ({
+          ...artwork,
+          _id: artwork.id,
+          viewsCount: Math.max(1, Math.round((artwork.popularity || 0) * 1.8) + index),
+          category: artwork.category || 'Other'
+        }));
+    const topPaintings = [...paintings]
+      .sort((a, b) => (b.viewsCount || 0) + (b.popularity || 0) - (a.viewsCount || 0) - (a.popularity || 0))
+      .slice(0, 8);
+
+    const categories = new Map();
+    paintings.forEach(painting => {
+      const category = painting.category || 'Other';
+      const current = categories.get(category) || { _id: category, totalViews: 0, count: 0, popularityTotal: 0 };
+      current.totalViews += Number(painting.viewsCount || 0);
+      current.count += 1;
+      current.popularityTotal += Number(painting.popularity || 0);
+      categories.set(category, current);
+    });
+    const categoryStats = [...categories.values()]
+      .map(({ popularityTotal, ...stat }) => ({ ...stat, avgPopularity: stat.count ? popularityTotal / stat.count : 0 }))
+      .sort((a, b) => b.totalViews - a.totalViews);
 
     const totalViews = categoryStats.reduce((acc, c) => acc + c.totalViews, 0);
     const totalArtworks = categoryStats.reduce((acc, c) => acc + c.count, 0);
@@ -67,7 +81,8 @@ router.get('/trending', optionalAuth, async (req, res) => {
       categoryStats,
       totalViews,
       totalArtworks,
-      userStats
+      userStats,
+      usingBuiltInData: databasePaintings.length === 0
     });
   } catch (err) {
     console.error('Error fetching analytics:', err);

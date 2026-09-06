@@ -32,6 +32,14 @@
 
 body {
   margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 #root {
@@ -88,4 +96,10 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+@media (max-width: 480px) {
+  :root {
+    font-size: 15px;
+  }
 }

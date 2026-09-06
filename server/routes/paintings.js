@@ -5,6 +5,68 @@ import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 
 const router = express.Router();
+const DOWNLOADABLE_IMAGE_HOSTS = new Set([
+  'images.unsplash.com',
+  'cdn.dribbble.com',
+  'mdl.artvee.com',
+  'api.nga.gov',
+  'artallin.com',
+  'i.pinimg.com',
+  'www.artic.edu'
+]);
+
+const IMAGE_EXTENSIONS = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif'
+};
+
+/**
+ * GET /api/paintings/download?url=<catalog-image-url>&name=<artwork-title>
+ * Streams an allowlisted catalog image with Content-Disposition: attachment.
+ */
+router.get('/download', async (req, res) => {
+  try {
+    const imageUrl = new URL(req.query.url);
+    if (imageUrl.protocol !== 'https:' || !DOWNLOADABLE_IMAGE_HOSTS.has(imageUrl.hostname)) {
+      return res.status(400).json({ error: 'This image source cannot be downloaded.' });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const imageResponse = await fetch(imageUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!imageResponse.ok) {
+      return res.status(502).json({ error: 'The image source could not be reached.' });
+    }
+
+    const contentType = imageResponse.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+    if (!contentType.startsWith('image/')) {
+      return res.status(502).json({ error: 'The source did not return an image.' });
+    }
+
+    const requestedName = String(req.query.name || 'artwork')
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || 'artwork';
+    const extension = IMAGE_EXTENSIONS[contentType] || 'jpg';
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${requestedName}.${extension}"`);
+    res.setHeader('Content-Length', imageBuffer.length);
+    return res.send(imageBuffer);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return res.status(504).json({ error: 'The image download timed out.' });
+    }
+    console.error('Error downloading artwork image:', err);
+    return res.status(400).json({ error: 'Invalid image download request.' });
+  }
+});
 
 /**
  * GET /api/paintings

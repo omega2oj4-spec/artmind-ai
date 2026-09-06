@@ -104,3 +104,49 @@
   font-weight: 600;
   text-decoration: underline;
 }
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 100px 20px 48px;
+  }
+
+  .dashboard-header {
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .dashboard-sections {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding-inline: 16px;
+  }
+
+  .dashboard-header {
+    padding: 20px 16px;
+  }
+
+  .dashboard-user-card {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .user-avatar-icon {
+    font-size: 2.6rem;
+  }
+
+  .user-meta h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-section .section-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .dashboard-cat-pill {
+    padding: 7px 14px;
+  }
+}

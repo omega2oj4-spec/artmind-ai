@@ -90,6 +90,16 @@ export default function Gallery() {
 
   const handleCategorySelect = (category) => {
     setActiveCategory(category);
+    setSelectedPaintingType('All Types');
+
+    if (category === 'All') {
+      setSearchQuery('');
+      setSelectedSurface('All Surfaces');
+      setSelectedColorMedium('All Color Media');
+      setSelectedStyle('All Styles');
+      setSelectedPopularity('Any Popularity');
+    }
+
     setScrollToCategoryResults(true);
   };
 

@@ -1,17 +1,19 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaSignInAlt } from 'react-icons/fa';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { FaEnvelope, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import './AuthPages.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +38,8 @@ export default function Login() {
       }
 
       login(data.token, data.user);
-      navigate('/dashboard');
+      window.scrollTo(0, 0);
+      navigate('/home');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -47,10 +50,25 @@ export default function Login() {
   return (
     <main className="auth-page-container">
       <div className="auth-card">
-        <div className="auth-header">
-          <h2>Sign In to ArtMind</h2>
-          <p>Access your saved favorite artworks and personalized AI recommendations</p>
-        </div>
+        <aside className="auth-art-panel">
+          <div className="auth-art-orb auth-art-orb-one"></div>
+          <div className="auth-art-orb auth-art-orb-two"></div>
+          <div className="auth-art-content">
+            <span className="auth-brand">ART MIND</span>
+            <h1>Your personal<br />art journey.</h1>
+            <p>Save artworks you love and receive recommendations shaped by your taste.</p>
+          </div>
+          <span className="auth-panel-label">AI CURATED COLLECTIONS</span>
+        </aside>
+
+        <section className="auth-form-panel">
+          <div className="auth-header">
+            <div className="auth-header-icon"><FaPalette /></div>
+            <h2>Welcome back</h2>
+            <p>Sign in to continue curating your collection.</p>
+          </div>
+
+        {location.state?.registered && <p className="auth-success-alert">Account created successfully. Please sign in to continue.</p>}
 
         {error && <div className="auth-error-alert">{error}</div>}
 
@@ -74,12 +92,21 @@ export default function Login() {
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(previous => !previous)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 
@@ -89,9 +116,10 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="auth-footer-link">
-          <p>Don't have an account yet? <Link to="/register">Create Account</Link></p>
-        </div>
+          <div className="auth-footer-link">
+            <p>New to ArtMind? <Link to="/register">Create an account</Link></p>
+          </div>
+        </section>
       </div>
     </main>
   );

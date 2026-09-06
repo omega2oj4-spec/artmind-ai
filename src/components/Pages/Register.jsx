@@ -1,7 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaUserPlus } from 'react-icons/fa';
-import { AuthContext } from '../../context/AuthContext.jsx';
+import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './AuthPages.css';
 
 export default function Register() {
@@ -9,10 +8,11 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -45,8 +45,7 @@ export default function Register() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      register(data.token, data.user);
-      navigate('/dashboard');
+      navigate('/login', { state: { registered: true } });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -57,10 +56,23 @@ export default function Register() {
   return (
     <main className="auth-page-container">
       <div className="auth-card">
-        <div className="auth-header">
-          <h2>Create ArtMind Account</h2>
-          <p>Join our AI art portal to curate collections and receive personalized insights</p>
-        </div>
+        <aside className="auth-art-panel">
+          <div className="auth-art-orb auth-art-orb-one"></div>
+          <div className="auth-art-orb auth-art-orb-two"></div>
+          <div className="auth-art-content">
+            <span className="auth-brand">ART MIND</span>
+            <h1>Discover art<br />made for you.</h1>
+            <p>Create your collection, explore new styles, and let AI guide your next find.</p>
+          </div>
+          <span className="auth-panel-label">AI CURATED COLLECTIONS</span>
+        </aside>
+
+        <section className="auth-form-panel">
+          <div className="auth-header">
+            <div className="auth-header-icon"><FaPalette /></div>
+            <h2>Create account</h2>
+            <p>Join ArtMind and start your art journey.</p>
+          </div>
 
         {error && <div className="auth-error-alert">{error}</div>}
 
@@ -98,12 +110,21 @@ export default function Register() {
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowPassword(previous => !previous)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 
@@ -112,12 +133,21 @@ export default function Register() {
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                className="auth-password-toggle"
+                onClick={() => setShowConfirmPassword(previous => !previous)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 
@@ -127,9 +157,10 @@ export default function Register() {
           </button>
         </form>
 
-        <div className="auth-footer-link">
-          <p>Already have an account? <Link to="/login">Sign In</Link></p>
-        </div>
+          <div className="auth-footer-link">
+            <p>Already a member? <Link to="/login">Sign in</Link></p>
+          </div>
+        </section>
       </div>
     </main>
   );

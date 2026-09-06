@@ -1,10 +1,21 @@
 import React from 'react';
+import { FaDownload } from 'react-icons/fa';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
   if (!painting) return null;
 
   const imageUrl = painting.imageUrl || painting.src;
+  const downloadName = `${(painting.title || 'artwork').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artwork'}.jpg`;
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = `/api/paintings/download?url=${encodeURIComponent(imageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
+    link.download = downloadName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   return (
     <article className="painting-card" id={`painting-${painting.id || painting._id}`} tabIndex="-1">
@@ -14,6 +25,16 @@ export default function PaintingCard({ painting }) {
           alt={painting.title}
           loading="lazy"
         />
+        <button
+          type="button"
+          className="painting-download-btn"
+          onClick={handleDownload}
+          aria-label={`Download ${painting.title || 'artwork'}`}
+          title="Download artwork"
+        >
+          <FaDownload />
+          <span>Download</span>
+        </button>
       </div>
 
       <div className="painting-card-content">

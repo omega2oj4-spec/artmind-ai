@@ -305,12 +305,63 @@
     gap: 12px;
   }
   .nl-search-input {
-    padding: 14px 20px;
+    padding: 14px 20px 14px 48px;
     font-size: 1rem;
   }
   .nl-search-btn {
     padding: 14px 20px;
     width: 100%;
     font-size: 1rem;
+  }
+
+  .hero-content {
+    margin-bottom: 56px;
+  }
+
+  .carousel-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+  }
+
+  .gallery-search-section .search-container {
+    margin-bottom: 20px;
+  }
+
+  .carousel-btn.prev-btn {
+    left: 10px;
+  }
+
+  .carousel-btn.next-btn {
+    right: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container {
+    padding-top: 100px;
+  }
+
+  .hero-content {
+    padding: 0 16px;
+    margin-bottom: 36px;
+  }
+
+  .hero-title {
+    font-size: 1.9rem;
+    margin-bottom: 16px;
+  }
+
+  .hero-subtitle {
+    margin-bottom: 28px;
+  }
+
+  .carousel-item {
+    width: min(72vw, 260px);
+    height: min(96vw, 340px);
+  }
+
+  .carousel-track-continuous {
+    gap: 20px;
   }
 }

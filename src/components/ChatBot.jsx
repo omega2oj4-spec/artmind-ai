@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaComments, FaTimes, FaPaperPlane, FaRobot } from 'react-icons/fa';
+import { FaTimes, FaPaperPlane, FaRobot, FaCamera, FaPlus } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import PaintingCard from './PaintingCard.jsx';
 import './ChatBot.css';
 
@@ -8,13 +9,14 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: 'Greetings! I am ArtMind, your AI Curator. How may I assist your art exploration today?',
+      text: 'Hello! I am ArtMind, your AI Curator. Ask me about paintings, artists, styles, colors, or collections. I will remember the context while we chat.',
       paintings: []
     }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const imageInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -26,11 +28,12 @@ export default function ChatBot() {
     }
   }, [messages, isOpen]);
 
-  const handleSend = async (e) => {
+  const handleSend = async (e, suggestedMessage = '') => {
     if (e) e.preventDefault();
-    if (!input.trim() || loading) return;
+    const messageToSend = suggestedMessage || input;
+    if (!messageToSend.trim() || loading) return;
 
-    const userMsg = input.trim();
+    const userMsg = messageToSend.trim();
     setInput('');
 
     const newMessages = [
@@ -42,9 +45,13 @@ export default function ChatBot() {
 
     try {
       const historyPayload = newMessages.map(m => ({ role: m.role, text: m.text }));
+      const token = localStorage.getItem('artmind_token');
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ message: userMsg, history: historyPayload })
       });
 
@@ -74,17 +81,84 @@ export default function ChatBot() {
     }
   };
 
+  const handleSuggestion = (suggestion) => {
+    handleSend(null, suggestion);
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || loading) return;
+
+    if (!file.type.startsWith('image/')) {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Please choose an image file (JPEG, PNG, WebP, or GIF).', paintings: [] }]);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'That image is larger than 10 MB. Please choose a smaller artwork image.', paintings: [] }]);
+      return;
+    }
+
+    const imagePreview = URL.createObjectURL(file);
+    setMessages(prev => [...prev, {
+      role: 'user',
+      text: 'Please analyze this painting.',
+      imagePreview,
+      paintings: []
+    }]);
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Image analysis failed');
+
+      const data = await res.json();
+      const analysis = data.analysis || {};
+      const colors = analysis.dominantColors?.length ? analysis.dominantColors.join(', ') : 'not available';
+      const responseText = `Here is what I see:\nStyle: ${analysis.style || 'Unknown'}\nCategory: ${analysis.category || 'Unknown'}\nMedium: ${analysis.mediumGuess || 'Unknown'}\nDominant colors: ${colors}\n\n${analysis.summary || 'I could not generate a full analysis for this artwork.'}`;
+
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: responseText,
+        paintings: data.similarPaintings || []
+      }]);
+    } catch (err) {
+      console.error('Image analysis error:', err);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: 'I could not analyze that image right now. Please try another artwork image.',
+        paintings: []
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="chatbot-wrapper">
       {!isOpen && (
-        <button 
-          className="chatbot-toggle-btn" 
-          onClick={() => setIsOpen(true)}
-          title="Ask ArtMind AI Curator"
-        >
-          <FaRobot className="chatbot-icon" />
-          <span className="chatbot-toggle-label">Ask ArtMind</span>
-        </button>
+        <div className="chatbot-launcher-actions">
+          <Link
+            to="/ai-vision"
+            className="ai-vision-camera-btn"
+            title="Open AI Vision artwork recognition"
+            aria-label="Open AI Vision artwork recognition"
+          >
+            <FaCamera />
+            <span>AI Vision</span>
+          </Link>
+          <button 
+            className="chatbot-toggle-btn" 
+            onClick={() => setIsOpen(true)}
+            title="Ask ArtMind AI Curator"
+          >
+            <FaRobot className="chatbot-icon" />
+            <span className="chatbot-toggle-label">Ask ArtMind</span>
+          </button>
+        </div>
       )}
 
       {isOpen && (
@@ -106,6 +180,7 @@ export default function ChatBot() {
             {messages.map((msg, index) => (
               <div key={index} className={`chat-bubble-container ${msg.role}`}>
                 <div className={`chat-bubble ${msg.role}`}>
+                  {msg.imagePreview && <img className="chat-uploaded-image" src={msg.imagePreview} alt="Artwork submitted for analysis" />}
                   <p>{msg.text}</p>
 
                   {/* Inline Painting Cards rendering */}
@@ -132,7 +207,33 @@ export default function ChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
+          {messages.length === 1 && !loading && (
+            <div className="chatbot-suggestions" aria-label="Suggested questions">
+              <button type="button" onClick={() => handleSuggestion('Show me modern abstract paintings with blue color themes.')}>Blue abstract art</button>
+              <button type="button" onClick={() => handleSuggestion('Explain Impressionism and show me related paintings.')}>About Impressionism</button>
+              <button type="button" onClick={() => handleSuggestion('Show me popular landscape paintings.')}>Popular landscapes</button>
+            </div>
+          )}
+
           <form className="chatbot-input-area" onSubmit={handleSend}>
+            <input
+              ref={imageInputRef}
+              className="chatbot-image-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleImageUpload}
+              aria-label="Upload artwork image"
+            />
+            <button
+              type="button"
+              className="chatbot-upload-btn"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={loading}
+              title="Upload a painting for AI analysis"
+              aria-label="Upload a painting for AI analysis"
+            >
+              <FaPlus />
+            </button>
             <input
               type="text"
               placeholder="Ask about styles, themes, or artists..."
