@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { homeArtworks } from '../../data/homeArtworks.js';
 import './Home.css';
 
 const TypewriterText = ({ text, delay = 0 }) => {
@@ -32,18 +33,20 @@ const TypewriterText = ({ text, delay = 0 }) => {
 
 const CarouselItem = ({ art }) => {
   return (
-    <div className="carousel-item">
+    <a className="carousel-item" href={`#painting-${art.id}`} aria-label={`View ${art.title} in the gallery`}>
       <img src={art.src} alt={art.title} loading="lazy" />
       
       <div className="artwork-info-always-visible">
         <h3 className="artwork-title">
           <TypewriterText text={art.title} />
         </h3>
-        <p className="artwork-artist">
-          <TypewriterText text={art.artist} delay={art.title.length * 40} />
-        </p>
+        {art.artist && (
+          <p className="artwork-artist">
+            <TypewriterText text={art.artist} delay={art.title.length * 40} />
+          </p>
+        )}
       </div>
-    </div>
+    </a>
   );
 };
 
@@ -86,7 +89,7 @@ function performNLSearch(query, artworks) {
 }
 
 export default function Home() {
-  const artworks = [
+  const artworks = homeArtworks; /* Legacy local list retained below for reference.
     {
       src: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop",
       title: "Sunflowers",
@@ -129,7 +132,7 @@ export default function Home() {
       artist: "Unknown",
       tags: ["watercolor", "landscape", "mountains", "nature", "mist", "forest"]
     }
-  ];
+  ]; */
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);

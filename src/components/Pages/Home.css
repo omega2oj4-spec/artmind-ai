@@ -230,6 +230,8 @@
   flex-shrink: 0;
   background: #eee;
   cursor: pointer;
+  color: inherit;
+  text-decoration: none;
 }
 
 .carousel-item:hover {
