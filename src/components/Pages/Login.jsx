@@ -37,9 +37,9 @@ export default function Login() {
         throw new Error(data.error || 'Login failed');
       }
 
-      login(data.token, data.user);
-      window.scrollTo(0, 0);
-      navigate('/dashboard', { replace: true });
+    login(data.token, data.user);
+window.scrollTo(0, 0);
+navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

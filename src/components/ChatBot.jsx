@@ -6,6 +6,7 @@ import './ChatBot.css';
 
 export default function ChatBot() {
   const location = useLocation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -16,53 +17,75 @@ export default function ChatBot() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
   const messagesEndRef = useRef(null);
   const imageInputRef = useRef(null);
-
-  if (['/', '/login', '/Login', '/register', '/Register'].includes(location.pathname)) {
-    return null;
-  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Hooks must always run before any conditional return
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
     }
   }, [messages, isOpen]);
 
+  // Hide chatbot on login/register pages
+  if (['/', '/login', '/Login', '/register', '/Register'].includes(location.pathname)) {
+    return null;
+  }
+
   const handleSend = async (e, suggestedMessage = '') => {
     if (e) e.preventDefault();
+
     const messageToSend = suggestedMessage || input;
+
     if (!messageToSend.trim() || loading) return;
 
     const userMsg = messageToSend.trim();
+
     setInput('');
 
     const newMessages = [
       ...messages,
-      { role: 'user', text: userMsg, paintings: [] }
+      {
+        role: 'user',
+        text: userMsg,
+        paintings: []
+      }
     ];
+
     setMessages(newMessages);
     setLoading(true);
 
     try {
-      const historyPayload = newMessages.map(m => ({ role: m.role, text: m.text }));
+      const historyPayload = newMessages.map(m => ({
+        role: m.role,
+        text: m.text
+      }));
+
       const token = localStorage.getItem('artmind_token');
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ message: userMsg, history: historyPayload })
+        body: JSON.stringify({
+          message: userMsg,
+          history: historyPayload
+        })
       });
 
-      if (!res.ok) throw new Error('Chat service error');
+      if (!res.ok) {
+        throw new Error('Chat service error');
+      }
 
       const data = await res.json();
+
       setMessages(prev => [
         ...prev,
         {
@@ -73,6 +96,7 @@ export default function ChatBot() {
       ]);
     } catch (err) {
       console.error('Chat error:', err);
+
       setMessages(prev => [
         ...prev,
         {
@@ -92,51 +116,97 @@ export default function ChatBot() {
 
   const handleImageUpload = async (event) => {
     const file = event.target.files?.[0];
+
     event.target.value = '';
+
     if (!file || loading) return;
 
     if (!file.type.startsWith('image/')) {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'Please choose an image file (JPEG, PNG, WebP, or GIF).', paintings: [] }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: 'Please choose an image file (JPEG, PNG, WebP, or GIF).',
+          paintings: []
+        }
+      ]);
       return;
     }
+
     if (file.size > 10 * 1024 * 1024) {
-      setMessages(prev => [...prev, { role: 'assistant', text: 'That image is larger than 10 MB. Please choose a smaller artwork image.', paintings: [] }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: 'That image is larger than 10 MB. Please choose a smaller artwork image.',
+          paintings: []
+        }
+      ]);
       return;
     }
 
     const imagePreview = URL.createObjectURL(file);
-    setMessages(prev => [...prev, {
-      role: 'user',
-      text: 'Please analyze this painting.',
-      imagePreview,
-      paintings: []
-    }]);
+
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'user',
+        text: 'Please analyze this painting.',
+        imagePreview,
+        paintings: []
+      }
+    ]);
+
     setLoading(true);
 
     const formData = new FormData();
     formData.append('image', file);
 
     try {
-      const res = await fetch('/api/analyze', { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Image analysis failed');
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        throw new Error('Image analysis failed');
+      }
 
       const data = await res.json();
-      const analysis = data.analysis || {};
-      const colors = analysis.dominantColors?.length ? analysis.dominantColors.join(', ') : 'not available';
-      const responseText = `Here is what I see:\nStyle: ${analysis.style || 'Unknown'}\nCategory: ${analysis.category || 'Unknown'}\nMedium: ${analysis.mediumGuess || 'Unknown'}\nDominant colors: ${colors}\n\n${analysis.summary || 'I could not generate a full analysis for this artwork.'}`;
 
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        text: responseText,
-        paintings: data.similarPaintings || []
-      }]);
+      const analysis = data.analysis || {};
+
+      const colors = analysis.dominantColors?.length
+        ? analysis.dominantColors.join(', ')
+        : 'not available';
+
+      const responseText = `Here is what I see:
+Style: ${analysis.style || 'Unknown'}
+Category: ${analysis.category || 'Unknown'}
+Medium: ${analysis.mediumGuess || 'Unknown'}
+Dominant colors: ${colors}
+
+${analysis.summary || 'I could not generate a full analysis for this artwork.'}`;
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: responseText,
+          paintings: data.similarPaintings || []
+        }
+      ]);
     } catch (err) {
       console.error('Image analysis error:', err);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        text: 'I could not analyze that image right now. Please try another artwork image.',
-        paintings: []
-      }]);
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: 'I could not analyze that image right now. Please try another artwork image.',
+          paintings: []
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -144,8 +214,10 @@ export default function ChatBot() {
 
   return (
     <div className="chatbot-wrapper">
+
       {!isOpen && (
         <div className="chatbot-launcher-actions">
+
           <Link
             to="/ai-vision"
             className="ai-vision-camera-btn"
@@ -155,72 +227,153 @@ export default function ChatBot() {
             <FaCamera />
             <span>AI Vision</span>
           </Link>
-          <button 
-            className="chatbot-toggle-btn" 
+
+          <button
+            className="chatbot-toggle-btn"
             onClick={() => setIsOpen(true)}
             title="Ask ArtMind AI Curator"
           >
             <FaRobot className="chatbot-icon" />
-            <span className="chatbot-toggle-label">Ask ArtMind</span>
+            <span className="chatbot-toggle-label">
+              Ask ArtMind
+            </span>
           </button>
+
         </div>
       )}
 
       {isOpen && (
         <div className="chatbot-window">
+
           <div className="chatbot-header">
+
             <div className="chatbot-header-title">
+
               <FaRobot color="#d4af37" />
+
               <div>
                 <h4>ArtMind Curator</h4>
                 <span>AI Catalog Assistant</span>
               </div>
+
             </div>
-            <button className="chatbot-close-btn" onClick={() => setIsOpen(false)}>
+
+            <button
+              className="chatbot-close-btn"
+              onClick={() => setIsOpen(false)}
+            >
               <FaTimes />
             </button>
+
           </div>
 
           <div className="chatbot-messages">
+
             {messages.map((msg, index) => (
-              <div key={index} className={`chat-bubble-container ${msg.role}`}>
+
+              <div
+                key={index}
+                className={`chat-bubble-container ${msg.role}`}
+              >
+
                 <div className={`chat-bubble ${msg.role}`}>
-                  {msg.imagePreview && <img className="chat-uploaded-image" src={msg.imagePreview} alt="Artwork submitted for analysis" />}
+
+                  {msg.imagePreview && (
+                    <img
+                      className="chat-uploaded-image"
+                      src={msg.imagePreview}
+                      alt="Artwork submitted for analysis"
+                    />
+                  )}
+
                   <p>{msg.text}</p>
 
-                  {/* Inline Painting Cards rendering */}
                   {msg.paintings && msg.paintings.length > 0 && (
                     <div className="chat-inline-paintings">
+
                       {msg.paintings.map(painting => (
-                        <div key={painting._id} className="chat-inline-card">
+
+                        <div
+                          key={painting._id}
+                          className="chat-inline-card"
+                        >
                           <PaintingCard painting={painting} />
                         </div>
+
                       ))}
+
                     </div>
                   )}
+
                 </div>
+
               </div>
+
             ))}
 
             {loading && (
               <div className="chat-bubble-container assistant">
+
                 <div className="chat-bubble assistant loading-dots">
-                  <span></span><span></span><span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
                 </div>
+
               </div>
             )}
+
             <div ref={messagesEndRef} />
+
           </div>
 
           {messages.length === 1 && !loading && (
-            <div className="chatbot-suggestions" aria-label="Suggested questions">
-              <button type="button" onClick={() => handleSuggestion('Show me modern abstract paintings with blue color themes.')}>Blue abstract art</button>
-              <button type="button" onClick={() => handleSuggestion('Explain Impressionism and show me related paintings.')}>About Impressionism</button>
-              <button type="button" onClick={() => handleSuggestion('Show me popular landscape paintings.')}>Popular landscapes</button>
+            <div
+              className="chatbot-suggestions"
+              aria-label="Suggested questions"
+            >
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleSuggestion(
+                    'Show me modern abstract paintings with blue color themes.'
+                  )
+                }
+              >
+                Blue abstract art
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleSuggestion(
+                    'Explain Impressionism and show me related paintings.'
+                  )
+                }
+              >
+                About Impressionism
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleSuggestion(
+                    'Show me popular landscape paintings.'
+                  )
+                }
+              >
+                Popular landscapes
+              </button>
+
             </div>
           )}
 
-          <form className="chatbot-input-area" onSubmit={handleSend}>
+          <form
+            className="chatbot-input-area"
+            onSubmit={handleSend}
+          >
+
             <input
               ref={imageInputRef}
               className="chatbot-image-input"
@@ -229,6 +382,7 @@ export default function ChatBot() {
               onChange={handleImageUpload}
               aria-label="Upload artwork image"
             />
+
             <button
               type="button"
               className="chatbot-upload-btn"
@@ -239,18 +393,26 @@ export default function ChatBot() {
             >
               <FaPlus />
             </button>
+
             <input
               type="text"
               placeholder="Ask about styles, themes, or artists..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
-            <button type="submit" disabled={!input.trim() || loading}>
+
+            <button
+              type="submit"
+              disabled={!input.trim() || loading}
+            >
               <FaPaperPlane />
             </button>
+
           </form>
+
         </div>
       )}
+
     </div>
   );
 }

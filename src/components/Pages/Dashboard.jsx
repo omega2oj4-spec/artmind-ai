@@ -6,7 +6,7 @@ import { AuthContext } from '../../context/AuthContext.jsx';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  const { user, token, loading: authLoading } = useContext(AuthContext);
   const [data, setData] = useState({
     recentlyViewed: [],
     favoriteCategories: [],
@@ -16,13 +16,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
-
+  if (authLoading || !user) return;
+  fetchDashboard();
+}, [authLoading, user, token]);
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('artmind_token');
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -49,7 +48,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {loading ? (
+      {authLoading || loading ? (
         <div className="gallery-loading-skeleton" style={{ marginTop: '32px' }}>
           <div className="skeleton-card"></div>
           <div className="skeleton-card"></div>
