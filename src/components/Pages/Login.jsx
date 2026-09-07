@@ -32,9 +32,23 @@ export default function Login() {
         body: JSON.stringify({ email: email.trim(), password })
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+      let data = {};
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error('The sign-in service returned an invalid response. Please try again shortly.');
+        }
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(data.error || 'The sign-in service is unavailable. Please try again shortly.');
+      }
+
+      if (!data.token || !data.user) {
+        throw new Error('The sign-in service returned an incomplete response. Please try again shortly.');
       }
 
     login(data.token, data.user);
