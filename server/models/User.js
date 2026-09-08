@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema(
         painting: { type: mongoose.Schema.Types.ObjectId, ref: 'Painting' },
         viewedAt: { type: Date, default: Date.now }
       }
+    ],
+    searchHistory: [
+      {
+        query: { type: String, trim: true },
+        searchedAt: { type: Date, default: Date.now }
+      }
     ]
   },
   { timestamps: true }

@@ -48,6 +48,7 @@ router.get('/trending', optionalAuth, async (req, res) => {
       const userDoc = await User.findById(req.user._id).populate('viewHistory.painting');
       if (userDoc) {
         const userViewsCount = userDoc.viewHistory ? userDoc.viewHistory.length : 0;
+        const userSearchesCount = userDoc.searchHistory ? userDoc.searchHistory.length : 0;
         const catFreq = {};
         const styleFreq = {};
 
@@ -69,6 +70,7 @@ router.get('/trending', optionalAuth, async (req, res) => {
           userName: userDoc.name,
           totalUserViews: userViewsCount,
           favoritesCount: userDoc.favorites ? userDoc.favorites.length : 0,
+          searchesCount: userSearchesCount,
           topCategory: topCat,
           topStyle: topStyle,
           personalizedInsight: `Based on your viewing activity, your primary artistic affinity is ${topCat} with a strong preference for ${topStyle} masterpieces.`

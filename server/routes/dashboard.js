@@ -68,7 +68,6 @@ router.get('/', optionalAuth, async (req, res) => {
     // 2. Favorite Categories derivation
     const categoryCounts = {};
     const favoriteCategoriesSet = new Set();
-
     if (user) {
       (user.favorites || []).forEach(p => {
         if (p && p.category) {
@@ -84,6 +83,43 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
     const favoriteCategories = sortedCategories.length > 0 ? sortedCategories : ['Abstract', 'Landscape', 'Flower', 'Nature'];
+
+    const searches = user?.searchHistory || [];
+    const latestView = user?.viewHistory?.[0]?.viewedAt;
+    const latestSearch = searches[searches.length - 1];
+    const latestAction = [
+      latestView && { type: 'view', date: latestView },
+      latestSearch?.searchedAt && { type: 'search', date: latestSearch.searchedAt, query: latestSearch.query }
+    ].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+    const activitySummary = {
+      viewedCount: user?.viewHistory?.length || 0,
+      savedCount: user?.favorites?.length || 0,
+      searchCount: searches.length,
+      latestAction: latestAction
+        ? {
+            label: latestAction.type === 'search'
+              ? `Last searched for “${latestAction.query}”`
+              : 'Last explored an artwork',
+            at: latestAction.date
+          }
+        : { label: 'Start by searching or exploring the gallery', at: null }
+    };
+
+    const recentActivity = [
+      ...(user?.viewHistory || []).slice(0, 4).map(item => ({
+        type: 'view',
+        label: item.painting?.title || 'Artwork explored',
+        detail: item.painting?.artist ? `by ${item.painting.artist}` : 'Gallery exploration',
+        at: item.viewedAt
+      })),
+      ...searches.slice(-4).map(item => ({
+        type: 'search',
+        label: 'Art search',
+        detail: `“${item.query}”`,
+        at: item.searchedAt
+      }))
+    ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 5);
 
     // 3. Recommendation Scoring Algorithm
     // Criteria:
@@ -123,7 +159,9 @@ router.get('/', optionalAuth, async (req, res) => {
       recentlyViewed,
       favoriteCategories,
       recommended,
-      aiCurated
+      aiCurated,
+      activitySummary,
+      recentActivity
     });
   } catch (err) {
     console.error('Error compiling dashboard data:', err);

@@ -37,6 +37,9 @@ function PortalPage() {
       {/* DASHBOARD */}
       <Dashboard />
 
+      {/* SEARCH — kept directly below the dashboard for quick discovery */}
+      <Search embedded />
+
       {/* GALLERY */}
       <Gallery />
 

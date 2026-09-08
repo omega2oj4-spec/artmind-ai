@@ -114,12 +114,12 @@ export default function Navbar() {
 
           {/* SEARCH */}
           <li>
-            <Link
-              to="/search"
-              onClick={() => setIsOpen(false)}
+            <a
+              href="#dashboard-search"
+              onClick={(e) => handleNavClick(e, 'dashboard-search')}
             >
               Search
-            </Link>
+            </a>
           </li>
 
           {/* DASHBOARD */}

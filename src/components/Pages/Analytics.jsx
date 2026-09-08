@@ -1,7 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck, FaSyncAlt } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
+import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import './Analytics.css';
+
+function buildLocalAnalytics() {
+  const paintings = getHomeGalleryArtworks();
+  const categories = new Map();
+
+  paintings.forEach((painting) => {
+    const category = painting.category || 'Other';
+    const current = categories.get(category) || { _id: category, totalViews: 0, count: 0, popularityTotal: 0 };
+    current.count += 1;
+    current.popularityTotal += Number(painting.popularity || 0);
+    categories.set(category, current);
+  });
+
+  const categoryStats = [...categories.values()]
+    .map(({ popularityTotal, ...category }) => ({
+      ...category,
+      avgPopularity: category.count ? popularityTotal / category.count : 0
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    topPaintings: [...paintings].sort((a, b) => (b.popularity || 0) - (a.popularity || 0)).slice(0, 8),
+    categoryStats,
+    totalViews: 0,
+    totalArtworks: paintings.length,
+    userStats: null,
+    usingBuiltInData: true,
+    localFallback: true
+  };
+}
 
 export default function Analytics({ embedded = false }) {
   const [analytics, setAnalytics] = useState({
@@ -32,7 +63,9 @@ export default function Analytics({ embedded = false }) {
       setAnalytics(data);
     } catch (err) {
       console.error('Error fetching analytics:', err);
-      setError('Analytics could not be refreshed. Please try again.');
+      // Keep the page useful when the optional API service is not running.
+      setAnalytics(buildLocalAnalytics());
+      setError('');
     } finally {
       setLoading(false);
     }
@@ -90,6 +123,13 @@ export default function Analytics({ embedded = false }) {
                     <span className="stat-label">Favorite Art Style</span>
                   </div>
                 </div>
+                <div className="stat-box">
+                  <FaMagic className="stat-icon" />
+                  <div className="stat-data">
+                    <span className="stat-number">{analytics.userStats.searchesCount}</span>
+                    <span className="stat-label">Art Searches</span>
+                  </div>
+                </div>
               </div>
               <p style={{ fontStyle: 'italic', color: '#e0e0e0', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FaMagic color="#d4af37" /> {analytics.userStats.personalizedInsight}
@@ -99,7 +139,11 @@ export default function Analytics({ embedded = false }) {
 
           {error && <p className="analytics-error" role="alert">{error}</p>}
           {analytics.usingBuiltInData && (
-            <p className="analytics-data-note">Showing insights from the gallery collection. Views update as visitors explore artworks.</p>
+            <p className="analytics-data-note">
+              {analytics.localFallback
+                ? 'Showing catalog insights while the analytics service is offline. Start the API server to see live account usage.'
+                : 'Showing insights from the gallery collection. Views update as visitors explore artworks.'}
+            </p>
           )}
           {/* High-level stats banner */}
           <div className="analytics-stats-banner">

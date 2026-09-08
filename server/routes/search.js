@@ -1,6 +1,8 @@
 import express from 'express';
 import Painting from '../models/Painting.js';
 import { parseNaturalLanguageSearch } from '../utils/gemini.js';
+import User from '../models/User.js';
+import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -8,7 +10,7 @@ const router = express.Router();
  * POST /api/search
  * Intelligent NLP search with automatic keyword fallback
  */
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { query } = req.body;
     if (!query || !query.trim()) {
@@ -17,6 +19,19 @@ router.post('/', async (req, res) => {
     }
 
     const trimmedQuery = query.trim();
+
+    // Searches are part of a member's art journey, so keep a compact history
+    // for personalized recommendations and usage analytics.
+    if (req.user) {
+      await User.findByIdAndUpdate(req.user._id, {
+        $push: {
+          searchHistory: {
+            $each: [{ query: trimmedQuery, searchedAt: new Date() }],
+            $slice: -25
+          }
+        }
+      });
+    }
 
     // 1. Try Gemini NLP Parsing
     const parsed = await parseNaturalLanguageSearch(trimmedQuery);

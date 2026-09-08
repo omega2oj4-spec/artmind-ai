@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { FaSearch, FaMagic, FaInfoCircle, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import './Search.css';
 
-export default function Search() {
+export default function Search({ embedded = false }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,9 +26,13 @@ export default function Search() {
     setHasSearched(true);
 
     try {
+      const token = localStorage.getItem('artmind_token');
       const res = await fetch('/api/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ query: q })
       });
 
@@ -37,6 +41,7 @@ export default function Search() {
       const data = await res.json();
       setResults(data.results || []);
       setUsingFallback(Boolean(data.usingFallback));
+      window.dispatchEvent(new Event('artmind:activity-updated'));
     } catch (err) {
       console.error('Search error:', err);
     } finally {
@@ -50,7 +55,7 @@ export default function Search() {
   };
 
   return (
-    <main className="search-page-container">
+    <main id={embedded ? 'dashboard-search' : undefined} className={`search-page-container ${embedded ? 'search-page-embedded' : ''}`}>
       <div className="search-page-header">
         <h1 className="search-page-title"><FaMagic color="#d4af37" /> Intelligent Art Search</h1>
         <p className="search-page-subtitle">
