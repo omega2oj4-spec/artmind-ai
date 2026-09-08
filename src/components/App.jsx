@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,7 +8,8 @@ import {
 
 import './App.css';
 
-import AuthProvider from '../context/AuthContext.jsx';
+import AuthProvider, { AuthContext } from '../context/AuthContext.jsx';
+import ProtectedRoute from './ProtectedRoute.jsx';
 
 import Home from './Pages/Home.jsx';
 import Gallery from './Pages/Gallery.jsx';
@@ -49,6 +50,13 @@ function PortalPage() {
   );
 }
 
+// Inline redirect for root route based on auth state
+function RootRedirect() {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return null;
+  return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/register" replace />;
+}
+
 
 // ===============================
 // APP
@@ -69,7 +77,7 @@ function App() {
             {/* DEFAULT */}
             <Route
               path="/"
-              element={<Navigate to="/register" replace />}
+              element={<RootRedirect />}
             />
 
             {/* HOME */}
@@ -102,7 +110,11 @@ function App() {
             {/* MAIN PORTAL */}
             <Route
               path="/dashboard"
-              element={<PortalPage />}
+              element={
+                <ProtectedRoute>
+                  <PortalPage />
+                </ProtectedRoute>
+              }
             />
 
             <Route
@@ -113,46 +125,78 @@ function App() {
             {/* GALLERY PAGE */}
             <Route
               path="/gallery"
-              element={<Gallery />}
+              element={
+                <ProtectedRoute>
+                  <Gallery />
+                </ProtectedRoute>
+              }
             />
 
             {/* PAINTING DETAILS */}
             <Route
               path="/painting/:id"
-              element={<PaintingDetails />}
+              element={
+                <ProtectedRoute>
+                  <PaintingDetails />
+                </ProtectedRoute>
+              }
             />
 
             {/* SEARCH */}
             <Route
               path="/search"
-              element={<Search />}
+              element={
+                <ProtectedRoute>
+                  <Search />
+                </ProtectedRoute>
+              }
             />
 
             {/* AI VISION */}
             <Route
               path="/ai-vision"
-              element={<AIVision />}
+              element={
+                <ProtectedRoute>
+                  <AIVision />
+                </ProtectedRoute>
+              }
             />
 
             <Route
               path="/AI vision"
-              element={<AIVision />}
+              element={
+                <ProtectedRoute>
+                  <AIVision />
+                </ProtectedRoute>
+              }
             />
 
             <Route
               path="/upload"
-              element={<AIVision />}
+              element={
+                <ProtectedRoute>
+                  <AIVision />
+                </ProtectedRoute>
+              }
             />
 
             {/* ANALYTICS PAGE */}
             <Route
               path="/analytics"
-              element={<Analytics />}
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              }
             />
 
             <Route
               path="/Analytics"
-              element={<Analytics />}
+              element={
+                <ProtectedRoute>
+                  <Analytics />
+                </ProtectedRoute>
+              }
             />
 
             {/* 404 */}

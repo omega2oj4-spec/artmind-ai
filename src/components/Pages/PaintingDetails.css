@@ -38,11 +38,17 @@
 }
 
 .details-image-wrapper {
+  position: relative;
   background: #ffffff;
   border: 1px solid #e8e2d5;
   border-radius: 16px;
   padding: 16px;
   box-shadow: 0 12px 32px rgba(26, 25, 24, 0.06);
+}
+
+.details-image-wrapper .painting-fav-btn {
+  top: 26px;
+  right: 26px;
 }
 
 .details-image-wrapper img {
@@ -196,13 +202,14 @@
 }
 
 .fav-action-btn:hover {
-  border-color: #d4af37;
+  border-color: #ff477e;
   transform: translateY(-2px);
 }
 
 .fav-action-btn.active {
-  border-color: #d4af37;
-  background: #fdfbf7;
+  border-color: #ff477e;
+  color: #ff477e;
+  background: #fff5f8;
 }
 
 .pdf-btn {

@@ -1,6 +1,6 @@
 import express from 'express';
 import Painting from '../models/Painting.js';
-import { generateCuratorSummary } from '../utils/gemini.js';
+import { generateCuratorSummary } from '../utils/openai.js';
 import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 

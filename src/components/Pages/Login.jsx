@@ -51,9 +51,10 @@ export default function Login() {
         throw new Error('The sign-in service returned an incomplete response. Please try again shortly.');
       }
 
-    login(data.token, data.user);
-window.scrollTo(0, 0);
-navigate('/dashboard', { replace: true });
+      login(data.token, data.user);
+      window.scrollTo(0, 0);
+      const from = location.state?.from || '/dashboard';
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

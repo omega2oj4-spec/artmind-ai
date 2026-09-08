@@ -266,7 +266,17 @@ export default function PaintingDetails() {
             <img
               src={painting.imageUrl}
               alt={painting.title}
+              referrerPolicy="no-referrer"
             />
+            <button
+              type="button"
+              className={`painting-fav-btn ${isFav ? 'active' : ''}`}
+              onClick={handleFavoriteToggle}
+              aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+              title={isFav ? "Remove from favorites" : "Add to favorites"}
+            >
+              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+            </button>
           </div>
 
           {/* View count */}
@@ -567,7 +577,7 @@ export default function PaintingDetails() {
               onClick={handleFavoriteToggle}
             >
               {isFav ? (
-                <FaHeart color="#d4af37" />
+                <FaHeart color="#ff477e" />
               ) : (
                 <FaRegHeart />
               )}

@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import Painting from '../models/Painting.js';
-import { analyzeImageWithVision } from '../utils/gemini.js';
+import { analyzeImageWithVision } from '../utils/openai.js';
 
 const router = express.Router();
 

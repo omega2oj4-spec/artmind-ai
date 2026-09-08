@@ -78,7 +78,7 @@ export default function AIVision() {
         >
           {previewUrl ? (
             <div className="image-preview-wrapper">
-              <img src={previewUrl} alt="Uploaded Artwork Preview" />
+              <img src={previewUrl} alt="Uploaded Artwork Preview" referrerPolicy="no-referrer" />
               <button className="change-image-btn" onClick={() => { setSelectedFile(null); setPreviewUrl(null); setAnalysis(null); }}>
                 Choose Different Image
               </button>

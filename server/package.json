@@ -9,7 +9,6 @@
     "seed": "node scripts/seedPaintings.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "docx": "^9.2.0",

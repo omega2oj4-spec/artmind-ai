@@ -1,6 +1,6 @@
 import express from 'express';
 import Painting from '../models/Painting.js';
-import { parseNaturalLanguageSearch } from '../utils/gemini.js';
+import { parseNaturalLanguageSearch } from '../utils/openai.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
 

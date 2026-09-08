@@ -283,6 +283,7 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
                       className="chat-uploaded-image"
                       src={msg.imagePreview}
                       alt="Artwork submitted for analysis"
+                      referrerPolicy="no-referrer"
                     />
                   )}
 
