@@ -8,6 +8,8 @@
     "client": "vite",
     "server": "cd server && node index.js",
     "build": "vite build",
+    "build:full": "npm install && cd server && npm install && cd .. && npm run build",
+    "start": "cd server && node index.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

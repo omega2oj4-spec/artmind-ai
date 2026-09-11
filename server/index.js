@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
 
 import paintingsRoutes from './routes/paintings.js';
@@ -13,7 +14,8 @@ import dashboardRoutes from './routes/dashboard.js';
 import authRoutes from './routes/auth.js';
 import analyticsRoutes from './routes/analytics.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +42,16 @@ app.use('/api/analyze', analyzeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
+
+// Serve built frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '../dist');
+  app.use(express.static(distPath));
+  // All non-API routes return the React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 // Global Error Handler
 app.use((err, req, res, next) => {
