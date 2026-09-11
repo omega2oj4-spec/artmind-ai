@@ -263,11 +263,23 @@ export default function PaintingDetails() {
         {/* Artwork image */}
         <div className="details-image-section">
           <div className="details-image-wrapper">
-            <img
-              src={painting.imageUrl}
-              alt={painting.title}
-              referrerPolicy="no-referrer"
-            />
+            {(() => {
+              const PROXIED_HOSTS = ['www.artic.edu', 'images.metmuseum.org', 'api.nga.gov'];
+              let resolvedUrl = painting.imageUrl || '';
+              try {
+                const { hostname } = new URL(resolvedUrl);
+                if (PROXIED_HOSTS.includes(hostname)) {
+                  resolvedUrl = `/api/paintings/proxy-image?url=${encodeURIComponent(resolvedUrl)}`;
+                }
+              } catch { /* not a valid URL — use as-is */ }
+              return (
+                <img
+                  src={resolvedUrl}
+                  alt={painting.title}
+                  referrerPolicy="no-referrer"
+                />
+              );
+            })()}
             <button
               type="button"
               className={`painting-fav-btn ${isFav ? 'active' : ''}`}
@@ -285,6 +297,37 @@ export default function PaintingDetails() {
             <span>
               {painting.viewsCount || 0} views
             </span>
+          </div>
+
+          {/* ========================================
+              AI CURATOR SUMMARY
+          ======================================== */}
+          <div className="ai-summary-block">
+            <div className="summary-block-header">
+              <h3>
+                <FaMagic color="#d4af37" />
+                AI Curator Insight
+              </h3>
+              {!summary && (
+                <button
+                  type="button"
+                  className="generate-summary-btn"
+                  onClick={handleGenerateSummary}
+                  disabled={summaryLoading}
+                >
+                  {summaryLoading
+                    ? 'Curating Insight...'
+                    : 'Generate Curator Summary'}
+                </button>
+              )}
+            </div>
+            {summary ? (
+              <p className="summary-text">{summary}</p>
+            ) : (
+              <p className="summary-placeholder">
+                Click above to call Gemini AI and generate an exclusive curator analysis for this work.
+              </p>
+            )}
           </div>
         </div>
 
@@ -525,44 +568,7 @@ export default function PaintingDetails() {
             )}
           </div>
 
-          {/* ========================================
-              AI CURATOR SUMMARY
-          ======================================== */}
-          <div className="ai-summary-block">
 
-            <div className="summary-block-header">
-
-              <h3>
-                <FaMagic color="#d4af37" />
-                AI Curator Insight
-              </h3>
-
-              {!summary && (
-                <button
-                  type="button"
-                  className="generate-summary-btn"
-                  onClick={handleGenerateSummary}
-                  disabled={summaryLoading}
-                >
-                  {summaryLoading
-                    ? 'Curating Insight...'
-                    : 'Generate Curator Summary'}
-                </button>
-              )}
-            </div>
-
-            {summary ? (
-              <p className="summary-text">
-                {summary}
-              </p>
-            ) : (
-              <p className="summary-placeholder">
-                Click above to call Gemini AI and
-                generate an exclusive curator analysis
-                for this work.
-              </p>
-            )}
-          </div>
 
           {/* ========================================
               ACTION BUTTONS
