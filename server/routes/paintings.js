@@ -5,14 +5,19 @@ import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 
 const router = express.Router();
-const DOWNLOADABLE_IMAGE_HOSTS = new Set([
+
+// Hosts allowed through the image proxy and downloader
+const ALLOWED_IMAGE_HOSTS = new Set([
   'images.unsplash.com',
   'cdn.dribbble.com',
   'mdl.artvee.com',
   'api.nga.gov',
   'artallin.com',
   'i.pinimg.com',
-  'www.artic.edu'
+  'www.artic.edu',
+  'lh3.googleusercontent.com',
+  'upload.wikimedia.org',
+  'images.metmuseum.org'
 ]);
 
 const IMAGE_EXTENSIONS = {
@@ -22,6 +27,71 @@ const IMAGE_EXTENSIONS = {
   'image/webp': 'webp',
   'image/gif': 'gif'
 };
+
+/**
+ * GET /api/paintings/proxy-image?url=<image-url>
+ *
+ * Server-side image proxy. artic.edu (and some other museum CDNs) block
+ * direct browser requests with 403 Forbidden. This endpoint fetches the
+ * image server-to-server (with the Referer the host expects) and streams
+ * it back with 7-day browser cache headers so each image is only fetched once.
+ */
+router.get('/proxy-image', async (req, res) => {
+  let imageUrl;
+  try {
+    imageUrl = new URL(req.query.url);
+  } catch {
+    return res.status(400).json({ error: 'Invalid image URL' });
+  }
+
+  if (imageUrl.protocol !== 'https:' || !ALLOWED_IMAGE_HOSTS.has(imageUrl.hostname)) {
+    return res.status(400).json({ error: 'Image host not allowed' });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    const imageResponse = await fetch(imageUrl.href, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/webp,image/avif,image/jpeg,image/*,*/*',
+        // Must match the image host — artic.edu requires this, otherwise 403
+        'Referer': `${imageUrl.protocol}//${imageUrl.hostname}/`
+      }
+    });
+    clearTimeout(timeout);
+
+    if (!imageResponse.ok) {
+      return res.status(imageResponse.status).json({ error: 'Could not fetch image from source' });
+    }
+
+    const contentType = imageResponse.headers.get('content-type')?.split(';')[0] || 'image/jpeg';
+    if (!contentType.startsWith('image/')) {
+      return res.status(502).json({ error: 'Source did not return an image' });
+    }
+
+    // Cache 7 days in the browser so paintings don't re-fetch on every load
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+    res.setHeader('Content-Type', contentType);
+
+    // Stream directly — avoids buffering entire image in Node memory
+    imageResponse.body.pipeTo(
+      new WritableStream({
+        write(chunk) { res.write(chunk); },
+        close() { res.end(); },
+        abort(err) { res.destroy(err); }
+      })
+    );
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return res.status(504).json({ error: 'Image fetch timed out' });
+    }
+    console.error('[ImageProxy]', err.message);
+    return res.status(500).json({ error: 'Image proxy error' });
+  }
+});
 
 /**
  * GET /api/paintings/download?url=<catalog-image-url>&name=<artwork-title>

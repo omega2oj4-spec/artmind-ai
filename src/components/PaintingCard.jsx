@@ -11,14 +11,29 @@ export default function PaintingCard({ painting }) {
   const paintingId = painting._id || painting.id;
   const isFav = favorites?.some(favId => String(favId) === String(paintingId));
 
-  const imageUrl = painting.imageUrl || painting.src;
+  const rawImageUrl = painting.imageUrl || painting.src;
+
+  // These hosts block direct browser image requests with 403.
+  // Route them through our server proxy — everything else loads fine directly.
+  const PROXIED_HOSTS = ['www.artic.edu', 'images.metmuseum.org', 'api.nga.gov'];
+  const imageUrl = (() => {
+    if (!rawImageUrl) return '';
+    try {
+      const { hostname } = new URL(rawImageUrl);
+      if (PROXIED_HOSTS.includes(hostname)) {
+        return `/api/paintings/proxy-image?url=${encodeURIComponent(rawImageUrl)}`;
+      }
+    } catch { /* not a valid URL — use as-is */ }
+    return rawImageUrl;
+  })();
+
   const downloadName = `${(painting.title || 'artwork').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artwork'}.jpg`;
 
   const handleDownload = (e) => {
     e.preventDefault();
     e.stopPropagation();
     const link = document.createElement('a');
-    link.href = `/api/paintings/download?url=${encodeURIComponent(imageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
+    link.href = `/api/paintings/download?url=${encodeURIComponent(rawImageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
     link.download = downloadName;
     document.body.appendChild(link);
     link.click();

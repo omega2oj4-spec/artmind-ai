@@ -42,9 +42,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(26, 25, 24, 0.65);
-  backdrop-filter: blur(4px);
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
   color: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -52,26 +52,27 @@
   font-size: 1.15rem;
   cursor: pointer;
   z-index: 5;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+  box-shadow: none;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
 }
 
 .painting-fav-btn:hover {
-  transform: scale(1.12);
-  background: rgba(26, 25, 24, 0.85);
-  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.2);
+  background: transparent;
+  border-color: transparent;
 }
 
 .painting-fav-btn.active {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: #ff477e;
+  background: transparent;
+  border: none;
   color: #ff477e;
-  box-shadow: 0 3px 10px rgba(255, 71, 126, 0.35);
+  box-shadow: none;
 }
 
 .painting-fav-btn.active:hover {
-  transform: scale(1.12);
-  background: #ffffff;
+  transform: scale(1.2);
+  background: transparent;
 }
 
 .painting-download-btn {
