@@ -214,10 +214,16 @@ router.post('/painting/:paintingId', async (req, res) => {
       `[Vision] Analyzing catalog painting: ${painting.title}`
     );
 
-    // Download the actual painting image
-    const imageResponse = await fetch(
-      painting.imageUrl
-    );
+    // Download the actual painting image (with headers to avoid museum CDN 403s)
+    const imageResponse = await fetch(painting.imageUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/webp,image/avif,image/jpeg,image/*,*/*',
+        'Referer': (() => {
+          try { const u = new URL(painting.imageUrl); return `${u.protocol}//${u.hostname}/`; } catch { return ''; }
+        })()
+      }
+    });
 
     if (!imageResponse.ok) {
       throw new Error(
