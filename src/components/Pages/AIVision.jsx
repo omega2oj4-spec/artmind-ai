@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaCloudUploadAlt, FaEye, FaPalette, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
+import API_BASE from '../../utils/api.js';
 import './AIVision.css';
 
 export default function AIVision() {
@@ -43,8 +44,11 @@ export default function AIVision() {
     formData.append('image', selectedFile);
 
     try {
-      const res = await fetch('/api/analyze', {
+      const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('artmind_token')}`
+        },
         body: formData
       });
 

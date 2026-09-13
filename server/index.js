@@ -15,8 +15,9 @@ import analyticsRoutes from './routes/analytics.js';
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
-// Connect to MongoDB
-connectDB();
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is required. Add a strong, unique value to server/.env.');
+}
 
 // Middleware
 app.use(cors());
@@ -51,9 +52,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Render requires 0.0.0.0 and its PORT environment variable
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(
-    `[Server] ArtMind AI Portal Server listening on port ${PORT}`
-  );
-});
+async function startServer() {
+  try {
+    await connectDB();
+
+    // Render requires 0.0.0.0 and its PORT environment variable
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(
+        `[Server] ArtMind AI Portal Server listening on port ${PORT}`
+      );
+    });
+  } catch (error) {
+    console.error('[Server] Startup failed:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();

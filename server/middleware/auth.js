@@ -12,7 +12,7 @@ export async function protect(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'artmind_secret_jwt_key_2026_safe');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       return res.status(401).json({ error: 'User not found' });
@@ -36,7 +36,7 @@ export function optionalAuth(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'artmind_secret_jwt_key_2026_safe');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     User.findById(decoded.id).select('-password').then(user => {
       req.user = user;
       next();

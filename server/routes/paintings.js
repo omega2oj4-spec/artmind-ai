@@ -19,6 +19,7 @@ const ALLOWED_IMAGE_HOSTS = new Set([
   'upload.wikimedia.org',
   'images.metmuseum.org'
 ]);
+const DOWNLOADABLE_IMAGE_HOSTS = ALLOWED_IMAGE_HOSTS;
 
 const IMAGE_EXTENSIONS = {
   'image/jpeg': 'jpg',
@@ -27,6 +28,10 @@ const IMAGE_EXTENSIONS = {
   'image/webp': 'webp',
   'image/gif': 'gif'
 };
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * GET /api/paintings/proxy-image?url=<image-url>
@@ -164,7 +169,11 @@ router.get('/', async (req, res) => {
       filter.popularity = { $gte: popularity };
     }
     if (search && search.trim()) {
-      const regex = new RegExp(search.trim(), 'i');
+      const normalizedSearch = search.trim();
+      if (normalizedSearch.length > 100) {
+        return res.status(400).json({ error: 'Search must be 100 characters or fewer' });
+      }
+      const regex = new RegExp(escapeRegExp(normalizedSearch), 'i');
       filter.$or = [{ title: regex }, { artist: regex }, { description: regex }, { tags: regex }];
     }
 

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaPaperPlane, FaRobot, FaCamera, FaPlus } from 'react-icons/fa';
 import { Link, useLocation } from 'react-router-dom';
 import PaintingCard from './PaintingCard.jsx';
+import API_BASE from '../utils/api.js';
 import './ChatBot.css';
 
 export default function ChatBot() {
@@ -68,7 +69,7 @@ export default function ChatBot() {
 
       const token = localStorage.getItem('artmind_token');
 
-      const res = await fetch('/api/chat', {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,8 +164,12 @@ export default function ChatBot() {
     formData.append('image', file);
 
     try {
-      const res = await fetch('/api/analyze', {
+      const token = localStorage.getItem('artmind_token');
+      const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: formData
       });
 

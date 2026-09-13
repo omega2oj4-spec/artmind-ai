@@ -2,15 +2,44 @@ import express from 'express';
 import multer from 'multer';
 import Painting from '../models/Painting.js';
 import { analyzeImageWithVision } from '../utils/openai.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
+const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const MAX_ANALYSES_PER_WINDOW = 10;
+const analysisAttempts = new Map();
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024
+  },
+  fileFilter: (req, file, callback) => {
+    if (!IMAGE_MIME_TYPES.has(file.mimetype)) {
+      return callback(new Error('Only JPEG, PNG, WebP, and GIF images are supported'));
+    }
+    callback(null, true);
   }
 });
+
+function limitAnalysisRequests(req, res, next) {
+  const key = String(req.user._id);
+  const now = Date.now();
+  const attempts = (analysisAttempts.get(key) || []).filter(
+    timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS
+  );
+
+  if (attempts.length >= MAX_ANALYSES_PER_WINDOW) {
+    return res.status(429).json({
+      error: 'Analysis limit reached. Please try again in an hour.'
+    });
+  }
+
+  attempts.push(now);
+  analysisAttempts.set(key, attempts);
+  return next();
+}
 
 /**
  * Calculate how similar a catalog painting is
@@ -137,7 +166,7 @@ async function findSimilarPaintings(analysis, excludeId = null) {
  *
  * POST /api/analyze
  */
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', protect, limitAnalysisRequests, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -190,7 +219,7 @@ router.post('/', upload.single('image'), async (req, res) => {
  *
  * POST /api/analyze/painting/:paintingId
  */
-router.post('/painting/:paintingId', async (req, res) => {
+router.post('/painting/:paintingId', protect, limitAnalysisRequests, async (req, res) => {
   try {
     const { paintingId } = req.params;
 
@@ -277,6 +306,13 @@ router.post('/painting/:paintingId', async (req, res) => {
         'Server error analyzing catalog painting'
     });
   }
+});
+
+router.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError || err.message === 'Only JPEG, PNG, WebP, and GIF images are supported') {
+    return res.status(400).json({ error: err.message });
+  }
+  return next(err);
 });
 
 export default router;

@@ -7,7 +7,7 @@ import { protect } from '../middleware/auth.js';
 const router = express.Router();
 
 function generateToken(id) {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'artmind_secret_jwt_key_2026_safe', {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
 }
