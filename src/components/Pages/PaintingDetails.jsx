@@ -14,6 +14,7 @@ import {
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../../utils/api.js';
+import { getArtworkImageUrl } from '../../utils/artworkImages.js';
 import './PaintingDetails.css';
 
 export default function PaintingDetails() {
@@ -265,7 +266,7 @@ export default function PaintingDetails() {
         <div className="details-image-section">
           <div className="details-image-wrapper">
             <img
-              src={proxyImageUrl(painting.imageUrl || '')}
+              src={proxyImageUrl(getArtworkImageUrl(painting))}
               alt={painting.title}
               referrerPolicy="no-referrer"
             />

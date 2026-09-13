@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../utils/api.js';
+import { getArtworkImageUrl } from '../utils/artworkImages.js';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
@@ -12,7 +13,9 @@ export default function PaintingCard({ painting }) {
   const paintingId = painting._id || painting.id;
   const isFav = favorites?.some(favId => String(favId) === String(paintingId));
 
-  const rawImageUrl = painting.imageUrl || painting.src;
+  // Art Institute image URLs are protected by Cloudflare and return 403 in
+  // production. Convert those records to a verified fallback before proxying.
+  const rawImageUrl = getArtworkImageUrl(painting);
   const imageUrl = proxyImageUrl(rawImageUrl);
 
 
