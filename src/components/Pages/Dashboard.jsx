@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FaUserCircle,
-  FaHeart,
+  FaUserCircle,FaHeart,
   FaHistory,
   FaMagic,
   FaGem,
@@ -12,6 +11,7 @@ import {
   FaArrowUp,
   FaPalette,
   FaCompass
+  
 } from 'react-icons/fa';
 
 import PaintingCard from '../PaintingCard.jsx';
@@ -131,12 +131,6 @@ export default function Dashboard() {
     }
   };
 
-  /*
-   * Use real categories from the backend.
-   *
-   * If the user has no activity yet,
-   * show sensible default categories.
-   */
   const categories =
     data.favoriteCategories?.length > 0
       ? data.favoriteCategories.slice(0, 4)
@@ -147,10 +141,7 @@ export default function Dashboard() {
           'Nature'
         ];
 
-  /*
-   * Match backend category percentages
-   * with the displayed categories.
-   */
+ 
   const categoryShares = categories.map(
     (category) => {
       const found = data.categoryShares?.find(
@@ -164,10 +155,7 @@ export default function Dashboard() {
     }
   );
 
-  /*
-   * For a completely new user,
-   * show a clean starter message.
-   */
+
   const isNewUser =
     summary.viewedCount === 0 &&
     summary.savedCount === 0 &&
