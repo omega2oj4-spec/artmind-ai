@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
 
 import paintingsRoutes from './routes/paintings.js';
@@ -14,11 +12,8 @@ import dashboardRoutes from './routes/dashboard.js';
 import authRoutes from './routes/auth.js';
 import analyticsRoutes from './routes/analytics.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
 // Connect to MongoDB
 connectDB();
@@ -30,7 +25,10 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'ArtMind AI Portal API is operational' });
+  res.json({
+    status: 'ok',
+    message: 'ArtMind AI Portal API is operational'
+  });
 });
 
 // API Routes
@@ -43,22 +41,19 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Serve built frontend in production
-if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, '../dist');
-  app.use(express.static(distPath));
-  // All non-API routes return the React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
-
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('[API Error]', err.stack || err.message);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message
+  });
 });
 
-app.listen(PORT, () => {
-  console.log(`[Server] ArtMind AI Portal Server listening on port ${PORT}`);
+// Render requires 0.0.0.0 and its PORT environment variable
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(
+    `[Server] ArtMind AI Portal Server listening on port ${PORT}`
+  );
 });
