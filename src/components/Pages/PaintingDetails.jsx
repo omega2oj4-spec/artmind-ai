@@ -269,6 +269,10 @@ export default function PaintingDetails() {
               src={proxyImageUrl(getArtworkImageUrl(painting))}
               alt={painting.title}
               referrerPolicy="no-referrer"
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = '/artwork-fallback.svg';
+              }}
             />
             <button
               type="button"

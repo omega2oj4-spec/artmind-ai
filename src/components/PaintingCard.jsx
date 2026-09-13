@@ -52,6 +52,10 @@ export default function PaintingCard({ painting }) {
             alt={painting.title}
             loading="lazy"
             referrerPolicy="no-referrer"
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = '/artwork-fallback.svg';
+            }}
           />
           <button
             type="button"
