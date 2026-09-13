@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck, FaSyncAlt } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
+import API_BASE from '../../utils/api.js';
 import './Analytics.css';
 
 function buildLocalAnalytics() {
@@ -57,7 +58,7 @@ export default function Analytics({ embedded = false }) {
       const headers = {};
       if (token) headers.Authorization = `Bearer ${token}`;
       setError('');
-      const res = await fetch('/api/analytics/trending', { headers });
+      const res = await fetch(`${API_BASE}/api/analytics/trending`, { headers });
       if (!res.ok) throw new Error('Analytics load failed');
       const data = await res.json();
       setAnalytics(data);

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import API_BASE from '../utils/api.js';
 
 export const AuthContext = createContext();
 
@@ -10,7 +11,7 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      fetch('/api/auth/me', {
+      fetch(`${API_BASE}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => {
@@ -57,7 +58,7 @@ export default function AuthProvider({ children }) {
     const method = isFav ? 'DELETE' : 'POST';
 
     try {
-      const res = await fetch(`/api/favorites/${paintingId}`, {
+      const res = await fetch(`${API_BASE}/api/favorites/${paintingId}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

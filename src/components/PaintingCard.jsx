@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
+import API_BASE from '../utils/api.js';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
@@ -21,7 +22,7 @@ export default function PaintingCard({ painting }) {
     try {
       const { hostname } = new URL(rawImageUrl);
       if (PROXIED_HOSTS.includes(hostname)) {
-        return `/api/paintings/proxy-image?url=${encodeURIComponent(rawImageUrl)}`;
+        return `${API_BASE}/api/paintings/proxy-image?url=${encodeURIComponent(rawImageUrl)}`;
       }
     } catch { /* not a valid URL — use as-is */ }
     return rawImageUrl;
@@ -33,7 +34,7 @@ export default function PaintingCard({ painting }) {
     e.preventDefault();
     e.stopPropagation();
     const link = document.createElement('a');
-    link.href = `/api/paintings/download?url=${encodeURIComponent(rawImageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
+    link.href = `${API_BASE}/api/paintings/download?url=${encodeURIComponent(rawImageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
     link.download = downloadName;
     document.body.appendChild(link);
     link.click();

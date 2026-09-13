@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaSearch, FaMagic, FaInfoCircle, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
+import API_BASE from '../../utils/api.js';
 import './Search.css';
 
 export default function Search({ embedded = false }) {
@@ -27,7 +28,7 @@ export default function Search({ embedded = false }) {
 
     try {
       const token = localStorage.getItem('artmind_token');
-      const res = await fetch('/api/search', {
+      const res = await fetch(`${API_BASE}/api/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

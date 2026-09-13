@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fa';
 
 import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
-
+import API_BASE from '../../utils/api.js';
 import './Gallery.css';
 
 const CATEGORIES = [
@@ -251,7 +251,7 @@ export default function Gallery() {
       }
 
       const res = await fetch(
-        '/api/dashboard/search-history',
+        `${API_BASE}/api/dashboard/search-history`,
         {
           method: 'POST',
           headers,
@@ -295,7 +295,7 @@ export default function Gallery() {
 
     try {
       let url =
-        '/api/paintings?';
+        `${API_BASE}/api/paintings?`;
 
       if (
         activeCategory !== 'All'

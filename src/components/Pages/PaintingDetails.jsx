@@ -13,6 +13,7 @@ import {
 } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
+import API_BASE from '../../utils/api.js';
 import './PaintingDetails.css';
 
 export default function PaintingDetails() {
@@ -50,7 +51,7 @@ export default function PaintingDetails() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/paintings/${id}`);
+      const res = await fetch(`${API_BASE}/api/paintings/${id}`);
 
       if (!res.ok) {
         throw new Error('Artwork not found');
@@ -84,7 +85,7 @@ export default function PaintingDetails() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`/api/views/${id}`, {
+      const res = await fetch(`${API_BASE}/api/views/${id}`, {
         method: 'POST',
         headers
       });
@@ -108,7 +109,7 @@ export default function PaintingDetails() {
 
     try {
       const res = await fetch(
-        `/api/analyze/painting/${id}`,
+        `${API_BASE}/api/analyze/painting/${id}`,
         {
           method: 'POST'
         }
@@ -154,7 +155,7 @@ export default function PaintingDetails() {
 
     try {
       const res = await fetch(
-        `/api/paintings/${id}/summary`,
+        `${API_BASE}/api/paintings/${id}/summary`,
         {
           method: 'POST'
         }
@@ -269,7 +270,7 @@ export default function PaintingDetails() {
               try {
                 const { hostname } = new URL(resolvedUrl);
                 if (PROXIED_HOSTS.includes(hostname)) {
-                  resolvedUrl = `/api/paintings/proxy-image?url=${encodeURIComponent(resolvedUrl)}`;
+                  resolvedUrl = `${API_BASE}/api/paintings/proxy-image?url=${encodeURIComponent(resolvedUrl)}`;
                 }
               } catch { /* not a valid URL — use as-is */ }
               return (
@@ -448,7 +449,7 @@ export default function PaintingDetails() {
             </button>
 
             <a
-              href={`/api/paintings/${id}/export/pdf`}
+              href={`${API_BASE}/api/paintings/${id}/export/pdf`}
               target="_blank"
               rel="noopener noreferrer"
               className="export-btn pdf-btn"
@@ -458,7 +459,7 @@ export default function PaintingDetails() {
             </a>
 
             <a
-              href={`/api/paintings/${id}/export/docx`}
+              href={`${API_BASE}/api/paintings/${id}/export/docx`}
               target="_blank"
               rel="noopener noreferrer"
               className="export-btn docx-btn"

@@ -16,6 +16,7 @@ import {
 
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
+import API_BASE from '../../utils/api.js';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -74,7 +75,7 @@ export default function Dashboard() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch('/api/dashboard', {
+      const res = await fetch(`${API_BASE}/api/dashboard`, {
         headers
       });
 
