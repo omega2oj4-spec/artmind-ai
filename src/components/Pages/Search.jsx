@@ -10,6 +10,7 @@ export default function Search({ embedded = false }) {
   const [loading, setLoading] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const sampleQueries = [
     "Oil paintings with peaceful nature themes",
@@ -55,6 +56,10 @@ export default function Search({ embedded = false }) {
     executeSearch();
   };
 
+  const matchingSuggestions = sampleQueries.filter((sampleQuery) =>
+    sampleQuery.toLowerCase().includes(query.trim().toLowerCase())
+  );
+
   return (
     <main id={embedded ? 'dashboard-search' : undefined} className={`search-page-container ${embedded ? 'search-page-embedded' : ''}`}>
       <div className="search-page-header">
@@ -73,6 +78,10 @@ export default function Search({ embedded = false }) {
               placeholder="e.g. 'Show me warm oil paintings with flower themes'..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => window.setTimeout(() => setShowSuggestions(false), 150)}
+              aria-expanded={showSuggestions}
+              aria-controls="art-search-suggestions"
             />
           </div>
           <button type="submit" className="search-page-btn" disabled={loading || !query.trim()}>
@@ -80,15 +89,16 @@ export default function Search({ embedded = false }) {
           </button>
         </form>
 
-        <div className="sample-queries">
-          <span>Try searching for:</span>
-          <div className="sample-query-pills">
-            {sampleQueries.map((sq, i) => (
+        {showSuggestions && matchingSuggestions.length > 0 && (
+          <div className="search-suggestions-dropdown" id="art-search-suggestions">
+            <p>Try searching for:</p>
+            {matchingSuggestions.map((sq) => (
               <button
-                key={i}
-                className="sample-pill"
-                onClick={() => {
+                type="button"
+                key={sq}
+                onMouseDown={() => {
                   setQuery(sq);
+                  setShowSuggestions(false);
                   executeSearch(sq);
                 }}
               >
@@ -96,7 +106,7 @@ export default function Search({ embedded = false }) {
               </button>
             ))}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Visible non-blocking fallback notification if fallback search was used */}
