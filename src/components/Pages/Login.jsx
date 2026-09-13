@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
+import API_BASE from '../../utils/api.js';
 import './AuthPages.css';
 
 export default function Login() {
@@ -26,7 +27,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password })

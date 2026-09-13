@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './AuthPages.css';
+import API_BASE from '../../utils/api.js';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -34,7 +35,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), password })
