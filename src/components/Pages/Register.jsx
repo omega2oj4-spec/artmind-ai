@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './AuthPages.css';
@@ -41,9 +41,19 @@ export default function Register() {
         body: JSON.stringify({ name: name.trim(), email: email.trim(), password })
       });
 
-      const data = await res.json();
+      const responseText = await res.text();
+      let data = {};
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error('The registration service returned an invalid response. Please try again shortly.');
+        }
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || 'The registration service is unavailable. Please try again shortly.');
       }
 
       navigate('/login', { state: { registered: true } });
@@ -75,46 +85,61 @@ export default function Register() {
             <p>Join ArtMind and start your art journey.</p>
           </div>
 
-        {error && <div className="auth-error-alert">{error}</div>}
+        {error && <div id="register-form-error" className="auth-error-alert" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
-            <label>Full Name</label>
+            <label htmlFor="register-name">Full Name</label>
             <div className="auth-input-wrapper">
               <FaUser className="auth-input-icon" />
               <input
+                id="register-name"
+                name="name"
                 type="text"
                 placeholder="Ada Lovelace"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'register-form-error' : undefined}
                 required
               />
             </div>
           </div>
 
           <div className="auth-field">
-            <label>Email Address</label>
+            <label htmlFor="register-email">Email Address</label>
             <div className="auth-input-wrapper">
               <FaEnvelope className="auth-input-icon" />
               <input
+                id="register-email"
+                name="email"
                 type="email"
                 placeholder="ada@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'register-form-error' : undefined}
                 required
               />
             </div>
           </div>
 
           <div className="auth-field">
-            <label>Password</label>
+            <label htmlFor="register-password">Password</label>
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
+                id="register-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="At least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'register-form-error' : undefined}
                 required
               />
               <button
@@ -122,6 +147,8 @@ export default function Register() {
                 className="auth-password-toggle"
                 onClick={() => setShowPassword(previous => !previous)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-controls="register-password"
+                aria-pressed={showPassword}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -130,14 +157,19 @@ export default function Register() {
           </div>
 
           <div className="auth-field">
-            <label>Confirm Password</label>
+            <label htmlFor="register-confirm-password">Confirm Password</label>
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
+                id="register-confirm-password"
+                name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Re-enter password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'register-form-error' : undefined}
                 required
               />
               <button
@@ -145,6 +177,8 @@ export default function Register() {
                 className="auth-password-toggle"
                 onClick={() => setShowConfirmPassword(previous => !previous)}
                 aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                aria-controls="register-confirm-password"
+                aria-pressed={showConfirmPassword}
                 title={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}

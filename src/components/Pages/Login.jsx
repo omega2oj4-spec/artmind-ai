@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
@@ -84,34 +84,44 @@ export default function Login() {
             <p>Sign in to continue curating your collection.</p>
           </div>
 
-        {location.state?.registered && <p className="auth-success-alert">Account created successfully. Please sign in to continue.</p>}
+        {location.state?.registered && <p className="auth-success-alert" role="status">Account created successfully. Please sign in to continue.</p>}
 
-        {error && <div className="auth-error-alert">{error}</div>}
+        {error && <div id="login-form-error" className="auth-error-alert" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
-            <label>Email Address</label>
+            <label htmlFor="login-email">Email Address</label>
             <div className="auth-input-wrapper">
               <FaEnvelope className="auth-input-icon" />
               <input
+                id="login-email"
+                name="email"
                 type="email"
                 placeholder="curator@artmind.ai"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-form-error' : undefined}
                 required
               />
             </div>
           </div>
 
           <div className="auth-field">
-            <label>Password</label>
+            <label htmlFor="login-password">Password</label>
             <div className="auth-input-wrapper">
               <FaLock className="auth-input-icon" />
               <input
+                id="login-password"
+                name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-form-error' : undefined}
                 required
               />
               <button
@@ -119,6 +129,8 @@ export default function Login() {
                 className="auth-password-toggle"
                 onClick={() => setShowPassword(previous => !previous)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-controls="login-password"
+                aria-pressed={showPassword}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
