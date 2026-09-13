@@ -26,6 +26,10 @@
 .auth-input-icon { position: absolute; left: 15px; color: #a18c70; font-size: .92rem; }
 .auth-input-wrapper input { width: 100%; padding: 13px 42px 13px 42px; border: 0; border-bottom: 1px solid #ded7cc; border-radius: 0; outline: none; background: transparent; color: #1a1918; font: inherit; font-size: .94rem; transition: border-color .2s ease; }
 .auth-input-wrapper input:focus { border-color: #d4af37; }
+.auth-input-wrapper input:focus-visible,
+.auth-password-toggle:focus-visible,
+.auth-submit-btn:focus-visible,
+.auth-footer-link a:focus-visible { outline: 3px solid #005fcc; outline-offset: 3px; }
 .auth-password-toggle { position: absolute; right: 8px; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: #8c7355; cursor: pointer; }
 .auth-password-toggle:hover { background: #f7f4ee; color: #1a1918; }
 .auth-submit-btn { display: flex; align-items: center; justify-content: center; margin-top: 12px; padding: 13px 18px; border: 1px solid #d4af37; border-radius: 24px; background: #1a1918; color: #f8e8b0; cursor: pointer; font: inherit; font-size: .94rem; font-weight: 700; transition: background .2s ease,transform .2s ease; }
