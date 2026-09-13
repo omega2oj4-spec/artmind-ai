@@ -9,5 +9,33 @@
 const API_BASE = import.meta.env.VITE_API_URL
   || (import.meta.env.PROD ? 'https://artmind-ai-1.onrender.com' : '');
 
-export default API_BASE;
+/**
+ * CDN hosts that block direct browser hotlink requests (403 / broken images).
+ * These must be fetched server-side through the proxy endpoint.
+ */
+const PROXIED_IMAGE_HOSTS = new Set([
+  'www.artic.edu',
+  'images.metmuseum.org',
+  'api.nga.gov',
+  'i.pinimg.com',
+  'artallin.com',
+  'mdl.artvee.com',
+  'cdn.dribbble.com',
+]);
 
+/**
+ * Returns a proxied URL for image sources that need server-side fetching,
+ * or the original URL for sources that load fine in the browser directly.
+ */
+export function proxyImageUrl(src) {
+  if (!src) return '';
+  try {
+    const { hostname } = new URL(src);
+    if (PROXIED_IMAGE_HOSTS.has(hostname)) {
+      return API_BASE + '/api/paintings/proxy-image?url=' + encodeURIComponent(src);
+    }
+  } catch { /* not a valid absolute URL - use as-is */ }
+  return src;
+}
+
+export default API_BASE;

@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import { homeArtworks } from '../../data/homeArtworks.js';
+import { proxyImageUrl } from '../../utils/api.js';
 import './Home.css';
+
 
 const TypewriterText = ({ text, delay = 0 }) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -51,7 +53,7 @@ const CarouselItem = ({ art }) => {
 
   return (
     <a className="carousel-item" href={`#painting-${art.id}`} aria-label={`View ${art.title} in the gallery`}>
-      <img src={art.src} alt={art.title} loading="lazy" referrerPolicy="no-referrer" />
+      <img src={proxyImageUrl(art.src)} alt={art.title} loading="lazy" referrerPolicy="no-referrer" />
       <button
         type="button"
         className={`painting-fav-btn ${isFav ? 'active' : ''}`}

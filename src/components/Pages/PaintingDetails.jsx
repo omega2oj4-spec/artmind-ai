@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
-import API_BASE from '../../utils/api.js';
+import API_BASE, { proxyImageUrl } from '../../utils/api.js';
 import './PaintingDetails.css';
 
 export default function PaintingDetails() {
@@ -264,23 +264,11 @@ export default function PaintingDetails() {
         {/* Artwork image */}
         <div className="details-image-section">
           <div className="details-image-wrapper">
-            {(() => {
-              const PROXIED_HOSTS = ['www.artic.edu', 'images.metmuseum.org', 'api.nga.gov'];
-              let resolvedUrl = painting.imageUrl || '';
-              try {
-                const { hostname } = new URL(resolvedUrl);
-                if (PROXIED_HOSTS.includes(hostname)) {
-                  resolvedUrl = `${API_BASE}/api/paintings/proxy-image?url=${encodeURIComponent(resolvedUrl)}`;
-                }
-              } catch { /* not a valid URL — use as-is */ }
-              return (
-                <img
-                  src={resolvedUrl}
-                  alt={painting.title}
-                  referrerPolicy="no-referrer"
-                />
-              );
-            })()}
+            <img
+              src={proxyImageUrl(painting.imageUrl || '')}
+              alt={painting.title}
+              referrerPolicy="no-referrer"
+            />
             <button
               type="button"
               className={`painting-fav-btn ${isFav ? 'active' : ''}`}

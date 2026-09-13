@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
-import API_BASE from '../utils/api.js';
+import API_BASE, { proxyImageUrl } from '../utils/api.js';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
@@ -13,20 +13,8 @@ export default function PaintingCard({ painting }) {
   const isFav = favorites?.some(favId => String(favId) === String(paintingId));
 
   const rawImageUrl = painting.imageUrl || painting.src;
+  const imageUrl = proxyImageUrl(rawImageUrl);
 
-  // These hosts block direct browser image requests with 403.
-  // Route them through our server proxy — everything else loads fine directly.
-  const PROXIED_HOSTS = ['www.artic.edu', 'images.metmuseum.org', 'api.nga.gov'];
-  const imageUrl = (() => {
-    if (!rawImageUrl) return '';
-    try {
-      const { hostname } = new URL(rawImageUrl);
-      if (PROXIED_HOSTS.includes(hostname)) {
-        return `${API_BASE}/api/paintings/proxy-image?url=${encodeURIComponent(rawImageUrl)}`;
-      }
-    } catch { /* not a valid URL — use as-is */ }
-    return rawImageUrl;
-  })();
 
   const downloadName = `${(painting.title || 'artwork').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artwork'}.jpg`;
 
