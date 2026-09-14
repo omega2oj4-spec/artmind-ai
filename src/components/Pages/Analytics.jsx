@@ -98,11 +98,11 @@ export default function Analytics({ embedded = false }) {
         <>
           {/* Personalized User Insights Section (when authenticated) */}
           {analytics.userStats && (
-            <section className="analytics-section personalized-analytics-box" style={{ background: 'rgba(212, 175, 55, 0.08)', padding: '24px', borderRadius: '12px', marginBottom: '36px', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
-              <h2 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <section className="analytics-section personalized-analytics-box">
+              <h2 className="section-title analytics-personalized-title">
                 <FaUserCheck color="#d4af37" /> Personalized Behavior & AI Insights for {analytics.userStats.userName}
               </h2>
-              <div className="analytics-stats-banner" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', marginBottom: '16px' }}>
+              <div className="analytics-stats-banner">
                 <div className="stat-box">
                   <FaEye className="stat-icon" />
                   <div className="stat-data">
@@ -132,7 +132,7 @@ export default function Analytics({ embedded = false }) {
                   </div>
                 </div>
               </div>
-              <p style={{ fontStyle: 'italic', color: '#e0e0e0', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <p className="personalized-insight">
                 <FaMagic color="#d4af37" /> {analytics.userStats.personalizedInsight}
               </p>
             </section>
