@@ -9,13 +9,36 @@ import {
   FaArrowLeft,
   FaAward,
   FaPalette,
-  FaEye
+  FaEye,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../../utils/api.js';
 import { getArtworkImageUrl } from '../../utils/artworkImages.js';
+import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import './PaintingDetails.css';
+
+function getLocalPainting(id) {
+  const artwork = getHomeGalleryArtworks()
+    .find((item) => item.id === id);
+
+  if (!artwork) {
+    return null;
+  }
+
+  return {
+    ...artwork,
+    dateDisplay: artwork.dateDisplay || 'Contemporary',
+    medium: artwork.medium || `${artwork.colorMedium || 'Mixed media'} on ${artwork.surface || 'Canvas'}`,
+    surface: artwork.surface || 'Canvas',
+    colorTheme: artwork.colorTheme || 'Contemporary palette',
+    popularity: artwork.popularity || 0,
+    viewsCount: artwork.viewsCount || 0,
+    description: artwork.description || `${artwork.title} is an ${String(artwork.style || 'contemporary').toLowerCase()} ${String(artwork.category || 'art').toLowerCase()} work featured in the ArtMind gallery.`,
+    isHomeArtwork: true
+  };
+}
 
 export default function PaintingDetails() {
   const { id } = useParams();
@@ -33,6 +56,7 @@ export default function PaintingDetails() {
   const [analysisLoading, setAnalysisLoading] = useState(false);
 
   const isFav = favorites?.includes(id);
+  const isLocalPainting = painting?.isHomeArtwork;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -50,6 +74,21 @@ export default function PaintingDetails() {
    */
   const fetchPaintingDetails = async () => {
     setLoading(true);
+
+    const localPainting = getLocalPainting(id);
+
+    if (localPainting) {
+      setPainting(localPainting);
+      setSimilarPaintings(
+        getHomeGalleryArtworks({
+          category: localPainting.category
+        })
+          .filter((artwork) => artwork.id !== id)
+          .slice(0, 6)
+      );
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/api/paintings/${id}`);
@@ -77,6 +116,10 @@ export default function PaintingDetails() {
    * Record that the user viewed this artwork
    */
   const recordView = async () => {
+    if (getLocalPainting(id)) {
+      return;
+    }
+
     try {
       const token = localStorage.getItem('artmind_token');
 
@@ -152,6 +195,14 @@ export default function PaintingDetails() {
    * Generate AI curator summary
    */
   const handleGenerateSummary = async () => {
+    if (isLocalPainting) {
+      setSummary(
+        painting.description ||
+          `${painting.title} is a curated ${String(painting.category || 'art').toLowerCase()} work in the ArtMind gallery.`
+      );
+      return;
+    }
+
     setSummaryLoading(true);
 
     try {
@@ -274,15 +325,17 @@ export default function PaintingDetails() {
                 event.currentTarget.src = '/artwork-fallback.svg';
               }}
             />
-            <button
-              type="button"
-              className={`painting-fav-btn ${isFav ? 'active' : ''}`}
-              onClick={handleFavoriteToggle}
-              aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-              title={isFav ? "Remove from favorites" : "Add to favorites"}
-            >
-              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
-            </button>
+            {!isLocalPainting && (
+              <button
+                type="button"
+                className={`painting-fav-btn ${isFav ? 'active' : ''}`}
+                onClick={handleFavoriteToggle}
+                aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+                title={isFav ? "Remove from favorites" : "Add to favorites"}
+              >
+                {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+              </button>
+            )}
           </div>
 
           {/* View count */}
@@ -423,43 +476,59 @@ export default function PaintingDetails() {
           ======================================== */}
           <div className="details-action-bar">
 
-            <button
-              type="button"
-              className={`fav-action-btn ${
-                isFav ? 'active' : ''
-              }`}
-              onClick={handleFavoriteToggle}
-            >
-              {isFav ? (
-                <FaHeart color="#ff477e" />
-              ) : (
-                <FaRegHeart />
-              )}
+            {isLocalPainting ? (
+              painting.sourceUrl && (
+                <a
+                  href={painting.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="export-btn pdf-btn"
+                >
+                  <FaExternalLinkAlt />
+                  View Original Source
+                </a>
+              )
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`fav-action-btn ${
+                    isFav ? 'active' : ''
+                  }`}
+                  onClick={handleFavoriteToggle}
+                >
+                  {isFav ? (
+                    <FaHeart color="#ff477e" />
+                  ) : (
+                    <FaRegHeart />
+                  )}
 
-              {isFav
-                ? 'In Your Favorites'
-                : 'Add to Favorites'}
-            </button>
+                  {isFav
+                    ? 'In Your Favorites'
+                    : 'Add to Favorites'}
+                </button>
 
-            <a
-              href={`${API_BASE}/api/paintings/${id}/export/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="export-btn pdf-btn"
-            >
-              <FaFilePdf />
-              Export PDF
-            </a>
+                <a
+                  href={`${API_BASE}/api/paintings/${id}/export/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="export-btn pdf-btn"
+                >
+                  <FaFilePdf />
+                  Export PDF
+                </a>
 
-            <a
-              href={`${API_BASE}/api/paintings/${id}/export/docx`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="export-btn docx-btn"
-            >
-              <FaFileWord />
-              Export Word
-            </a>
+                <a
+                  href={`${API_BASE}/api/paintings/${id}/export/docx`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="export-btn docx-btn"
+                >
+                  <FaFileWord />
+                  Export Word
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>
