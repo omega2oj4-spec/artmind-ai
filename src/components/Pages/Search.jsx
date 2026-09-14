@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaSearch, FaMagic, FaInfoCircle, FaPalette } from 'react-icons/fa';
+import { FaSearch, FaMagic, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import API_BASE from '../../utils/api.js';
 import './Search.css';
@@ -8,7 +8,6 @@ export default function Search({ embedded = false }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
@@ -42,7 +41,6 @@ export default function Search({ embedded = false }) {
 
       const data = await res.json();
       setResults(data.results || []);
-      setUsingFallback(Boolean(data.usingFallback));
       window.dispatchEvent(new Event('artmind:activity-updated'));
     } catch (err) {
       console.error('Search error:', err);
@@ -108,14 +106,6 @@ export default function Search({ embedded = false }) {
           </div>
         )}
       </div>
-
-      {/* Visible non-blocking fallback notification if fallback search was used */}
-      {usingFallback && (
-        <div className="fallback-notification">
-          <FaInfoCircle className="fallback-icon" />
-          <span>Note: Operating in Keyword Fallback Mode — showing direct pattern matches for your query.</span>
-        </div>
-      )}
 
       {hasSearched && (
         <div className="search-results-section">
