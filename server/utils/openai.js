@@ -1,15 +1,111 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
-});
+// The chat service uses the OpenAI API directly. The previous Gemini endpoint
+// was configured with a placeholder key, so every chat request failed before a
+// response could be generated.
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
+
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4.1-mini';
+
+function findCatalogMatches(message, catalogContext) {
+  const terms = String(message || '')
+    .toLowerCase()
+    .match(/[a-z]{3,}/g)
+    ?.filter(term => !['about', 'please', 'would', 'could', 'show', 'with', 'that', 'this', 'what', 'have', 'like', 'some', 'paintings', 'painting', 'artwork', 'artworks'].includes(term)) || [];
+
+  return catalogContext
+    .map((painting) => {
+      const searchable = [
+        painting.title,
+        painting.artist,
+        painting.category,
+        painting.style,
+        painting.medium,
+        painting.colorTheme,
+        ...(painting.tags || [])
+      ].join(' ').toLowerCase();
+
+      return {
+        painting,
+        score: terms.reduce(
+          (total, term) => total + (searchable.includes(term) ? 1 : 0),
+          0
+        )
+      };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map(({ painting }) => painting);
+}
+
+function buildCatalogFallback(message, catalogContext) {
+  const query = String(message || '').trim().toLowerCase();
+  const matches = findCatalogMatches(query, catalogContext);
+  const greeting = /^(hi|hello|hey|good morning|good afternoon|good evening)[!. ]*$/i.test(query);
+
+  if (greeting) {
+    return {
+      reply: 'Hello! I’m ArtMind, your art-curator assistant. I can talk through artists, styles, techniques, colour palettes, and help you find artworks in this collection.',
+      paintingIds: []
+    };
+  }
+
+  if (/impressionism/.test(query)) {
+    return {
+      reply: 'Impressionism focuses on fleeting light, visible brushwork, and the atmosphere of a moment rather than fine detail. Artists often used broken colour and outdoor scenes to create a lively, immediate feeling.',
+      paintingIds: matches.map(painting => String(painting._id))
+    };
+  }
+
+  if (/abstract/.test(query)) {
+    return {
+      reply: 'Abstract art uses colour, shape, texture, and composition to express an idea or feeling instead of depicting a scene literally. Try noticing which colours, rhythms, or forms draw your eye first.',
+      paintingIds: matches.map(painting => String(painting._id))
+    };
+  }
+
+  if (matches.length) {
+    const names = matches
+      .slice(0, 2)
+      .map(painting => `“${painting.title}”`)
+      .join(' and ');
+
+    return {
+      reply: `I found ${names} in the collection. They are a good match for what you described—open either artwork to explore its artist, style, and visual details.`,
+      paintingIds: matches.map(painting => String(painting._id))
+    };
+  }
+
+  return {
+    reply: 'I can help with art questions in a conversational way—ask about an artist, a movement such as Impressionism or Abstract art, a colour mood, or the kind of artwork you would like to discover.',
+    paintingIds: []
+  };
+}
+
+function parseChatResponse(text) {
+  const cleanText = String(text || '')
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '');
+
+  return JSON.parse(cleanText);
+}
 
 export async function chatWithOpenAI(
   message,
   history = [],
   catalogContext = []
 ) {
+  const fallback = buildCatalogFallback(message, catalogContext);
+
+  if (!openai) {
+    console.warn('[Chat] OPENAI_API_KEY is not configured; using catalog fallback.');
+    return fallback;
+  }
+
   try {
     const catalogText = catalogContext
       .map(
@@ -25,6 +121,7 @@ Colors: ${painting.colorTheme}`
       .join('\n\n');
 
     const formattedHistory = history
+      .slice(-12)
       .map(
         item =>
           `${item.role === 'user' ? 'User' : 'Assistant'}: ${item.text}`
@@ -32,13 +129,16 @@ Colors: ${painting.colorTheme}`
       .join('\n');
 
     const response = await openai.responses.create({
-      model: 'gemini-3.6-flash',
+      model: CHAT_MODEL,
+      max_output_tokens: 450,
 
       instructions: `You are ArtMind, an AI art curator for the ArtMind AI Portal.
 
-Help users explore paintings and learn about art.
+Have a natural, helpful conversation about art. Answer questions about artists,
+styles, techniques, colours, and art appreciation clearly, even when the user
+is not explicitly asking for recommendations.
 
-You MUST only recommend paintings that exist in this catalog:
+You may only recommend specific artworks that exist in this catalog:
 
 ${catalogText}
 
@@ -61,7 +161,8 @@ If the user is not asking for painting recommendations, return:
 IMPORTANT:
 - Never invent painting IDs.
 - Only use IDs that appear in the catalog.
-- Keep the reply friendly and concise.`,
+- Keep the reply friendly, accurate, and concise.
+- Preserve context from the recent conversation.`,
 
       input: `${formattedHistory}
 
@@ -75,14 +176,11 @@ User: ${message}`
     let parsed;
 
     try {
-      parsed = JSON.parse(text);
+      parsed = parseChatResponse(text);
     } catch (parseError) {
       console.error('[OpenAI] Invalid JSON:', text);
 
-      return {
-        reply: text,
-        paintingIds: []
-      };
+      return { ...fallback, reply: text || fallback.reply };
     }
 
     console.log('[OpenAI] Painting IDs:', parsed.paintingIds);
@@ -96,7 +194,7 @@ User: ${message}`
 
   } catch (error) {
     console.error('[OpenAI] Chat error:', error.message);
-    throw error;
+    return fallback;
   }
 }
 
