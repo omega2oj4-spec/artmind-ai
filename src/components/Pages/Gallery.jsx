@@ -16,7 +16,10 @@ import {
   FaCompass
 } from 'react-icons/fa';
 
-import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
+import {
+  getHomeGalleryArtworks,
+  getSubmittedAbstractArtworks
+} from '../../data/homeArtworks.js';
 import API_BASE from '../../utils/api.js';
 import './Gallery.css';
 
@@ -377,35 +380,32 @@ export default function Gallery() {
       const data =
         await res.json();
 
+      const galleryFilters = {
+        category:
+          selectedPaintingType !== 'All Types'
+            ? selectedPaintingType
+            : activeCategory,
+        surface: selectedSurface,
+        colorMedium:
+          selectedColorMedium === 'All Mediums'
+            ? 'All Color Media'
+            : selectedColorMedium,
+        style: selectedStyle,
+        minPopularity: selectedPopularity,
+        search: searchQuery
+      };
+
       const galleryPaintings =
-        Array.isArray(data) &&
-        data.length > 0
-          ? data
-          : getHomeGalleryArtworks({
-              category:
-                selectedPaintingType !==
-                'All Types'
-                  ? selectedPaintingType
-                  : activeCategory,
-
-              surface:
-                selectedSurface,
-
-              colorMedium:
-                selectedColorMedium ===
-                'All Mediums'
-                  ? 'All Color Media'
-                  : selectedColorMedium,
-
-              style:
-                selectedStyle,
-
-              minPopularity:
-                selectedPopularity,
-
-              search:
-                searchQuery
-            });
+        Array.isArray(data) && data.length > 0
+          ? [
+              ...data,
+              ...getSubmittedAbstractArtworks(
+                galleryFilters
+              )
+            ]
+          : getHomeGalleryArtworks(
+              galleryFilters
+            );
 
       setPaintings(
         galleryPaintings

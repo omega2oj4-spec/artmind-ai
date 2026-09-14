@@ -57,15 +57,15 @@ export const homeArtworks = [
   { id: 'pinterest-08a59dc4', src: 'https://i.pinimg.com/736x/08/a5/9d/08a59dc4d844dd41427f4e75983d2114.jpg', title: 'Tangerine Light', tags: [] },
   { id: 'pinterest-4c1d6a42', src: 'https://i.pinimg.com/736x/4c/1d/6a/4c1d6a42be9b1bc613e297660ab1d6f2.jpg', title: 'Broken Symmetry', tags: [] },
   { id: 'pinterest-eae208e7', src: 'https://i.pinimg.com/1200x/ea/e2/08/eae208e761ba2dd81df1414ede874956.jpg', title: 'Morning Reverie', tags: [] },
-  { id: 'pinterest-f68e4543', src: 'https://i.pinimg.com/736x/f6/8e/45/f68e454334b96ed80b7c0c24d32d8b06.jpg', title: 'Abstract Study IX', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-845a4c79', src: 'https://i.pinimg.com/736x/84/5a/4c/845a4c799850bd14844b18ece78003d1.jpg', title: 'Abstract Study X', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-ccaefd7a', src: 'https://i.pinimg.com/736x/cc/ae/fd/ccaefd7a9a728d242a3eacc538c387c5.jpg', title: 'Abstract Study XI', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-60648b10', src: 'https://i.pinimg.com/736x/60/64/8b/60648b108bb819b5890b1fd822c98578.jpg', title: 'Abstract Study XII', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-27c1f257', src: 'https://i.pinimg.com/736x/27/c1/f2/27c1f2578430c7f4a5681e69080888f6.jpg', title: 'Abstract Study XIII', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-563619c8', src: 'https://i.pinimg.com/736x/56/36/19/563619c831207f8430baedf7e24d9d0d.jpg', title: 'Abstract Study XIV', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-998b3fe8', src: 'https://i.pinimg.com/736x/99/8b/3f/998b3fe8a55a01e901525abf4da50312.jpg', title: 'Abstract Study XV', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-80631413', src: 'https://i.pinimg.com/736x/80/63/14/80631413a590e3951efec44bcbea7630.jpg', title: 'Abstract Study XVI', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] },
-  { id: 'pinterest-a36947cc', src: 'https://i.pinimg.com/736x/a3/69/47/a36947cc19c4fc5bd263b658715d102f.jpg', title: 'Abstract Study XVII', artist: 'Unknown Artist', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'] }
+  { id: 'pinterest-f68e4543', src: 'https://i.pinimg.com/736x/f6/8e/45/f68e454334b96ed80b7c0c24d32d8b06.jpg', title: 'Abstract Horse Painting', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'horse', 'animal', 'acrylic', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/1055599909529356/' },
+  { id: 'pinterest-845a4c79', src: 'https://i.pinimg.com/736x/84/5a/4c/845a4c799850bd14844b18ece78003d1.jpg', title: 'Olómoge', artist: 'WaleVizion', category: 'Abstract', style: 'Expressionism', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'portrait', 'expressionism', 'face', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/33284484742497136/' },
+  { id: 'pinterest-ccaefd7a', src: 'https://i.pinimg.com/736x/cc/ae/fd/ccaefd7a9a728d242a3eacc538c387c5.jpg', title: 'Abstract Dancer Painting', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'dancer', 'figure', 'ribbon', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/312718767900054659/' },
+  { id: 'pinterest-60648b10', src: 'https://i.pinimg.com/736x/60/64/8b/60648b108bb819b5890b1fd822c98578.jpg', title: 'Abstract Acrylic Texture', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'acrylic', 'texture', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/777222848239532583/' },
+  { id: 'pinterest-27c1f257', src: 'https://i.pinimg.com/736x/27/c1/f2/27c1f2578430c7f4a5681e69080888f6.jpg', title: 'Cherry Landscape', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'landscape', 'cherry', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/1108307789612553816/' },
+  { id: 'pinterest-563619c8', src: 'https://i.pinimg.com/736x/56/36/19/563619c831207f8430baedf7e24d9d0d.jpg', title: 'Golden Desert Sunset', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Oil', tags: ['pinterest', 'abstract', 'desert', 'sunset', 'sahara', 'oil', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/1136314549758220627/' },
+  { id: 'pinterest-998b3fe8', src: 'https://i.pinimg.com/736x/99/8b/3f/998b3fe8a55a01e901525abf4da50312.jpg', title: 'Abstract Canvas Study', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'canvas', 'yellow', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/499336677454624493/' },
+  { id: 'pinterest-80631413', src: 'https://i.pinimg.com/736x/80/63/14/80631413a590e3951efec44bcbea7630.jpg', title: 'Untitled Abstract Painting', artist: 'Artist not provided', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'modern', 'painting'], sourceUrl: 'https://i.pinimg.com/736x/80/63/14/80631413a590e3951efec44bcbea7630.jpg' },
+  { id: 'pinterest-a36947cc', src: 'https://i.pinimg.com/736x/a3/69/47/a36947cc19c4fc5bd263b658715d102f.jpg', title: 'A Man Sitting at a Table', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'figure', 'table', 'chair', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/1143421792925057602/' }
 ];
 
 const homeGalleryMetadata = {
@@ -138,6 +138,18 @@ const homeGalleryMetadata = {
   'pinterest-a36947cc': { surface: 'Canvas', popularity: 90 }
 };
 
+const submittedAbstractArtworkIds = new Set([
+  'pinterest-f68e4543',
+  'pinterest-845a4c79',
+  'pinterest-ccaefd7a',
+  'pinterest-60648b10',
+  'pinterest-27c1f257',
+  'pinterest-563619c8',
+  'pinterest-998b3fe8',
+  'pinterest-80631413',
+  'pinterest-a36947cc'
+]);
+
 export function getHomeGalleryArtworks({ category = 'All', surface = 'All Surfaces', colorMedium = 'All Color Media', style = 'All Styles', minPopularity = 'Any Popularity', search = '' } = {}) {
   const query = search.trim().toLowerCase();
   return homeArtworks
@@ -149,4 +161,11 @@ export function getHomeGalleryArtworks({ category = 'All', surface = 'All Surfac
     .filter((artwork) => minPopularity === 'Any Popularity' || artwork.popularity >= Number(minPopularity))
     .filter((artwork) => !query || [artwork.title, artwork.artist, artwork.category, artwork.style, ...artwork.tags].join(' ').toLowerCase().includes(query))
     .map((artwork) => ({ ...artwork, imageUrl: artwork.src, isHomeArtwork: true }));
+}
+
+export function getSubmittedAbstractArtworks(filters = {}) {
+  return getHomeGalleryArtworks(filters)
+    .filter((artwork) =>
+      submittedAbstractArtworkIds.has(artwork.id)
+    );
 }
