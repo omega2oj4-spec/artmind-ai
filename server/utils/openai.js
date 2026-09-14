@@ -7,19 +7,44 @@ const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4.1-mini';
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
 
 const PORTAL_DESTINATIONS = [
-  { path: '/gallery', label: 'Open Gallery', terms: ['gallery', 'browse', 'collection', 'artworks', 'paintings'] },
-  { path: '/dashboard', label: 'Open Dashboard', terms: ['dashboard', 'activity', 'saved', 'favorites', 'profile'] },
-  { path: '/ai-vision', label: 'Open AI Vision', terms: ['ai vision', 'analyse', 'analyze', 'upload', 'identify'] },
-  { path: '/analytics', label: 'Open Analytics', terms: ['analytics', 'trending', 'insights', 'popular'] }
+  { path: '/gallery', label: 'Open Gallery', terms: ['gallery', 'browse collection'] },
+  { path: '/search', label: 'Open Search', terms: ['search'] },
+  { path: '/dashboard', label: 'Open Dashboard', terms: ['dashboard', 'saved', 'favorites', 'profile'] },
+  { path: '/ai-vision', label: 'Open AI Vision', terms: ['ai vision', 'analyse', 'analyze', 'upload painting', 'identify artwork'] },
+  { path: '/analytics', label: 'Open Analytics', terms: ['analytics', 'trending', 'insights'] }
 ];
 
-function findPortalDestination(message) {
+const CHAT_STOP_WORDS = new Set([
+  'about', 'please', 'would', 'could', 'show', 'with', 'that', 'this', 'what',
+  'have', 'like', 'some', 'paintings', 'painting', 'artwork', 'artworks', 'color',
+  'colours', 'colors', 'themes', 'theme', 'related', 'suitable', 'collection',
+  'collections', 'help', 'tell', 'explain', 'want', 'looking', 'need', 'from'
+]);
+
+const CHAT_SYNONYMS = {
+  blue: ['blue', 'azure', 'navy', 'indigo', 'cobalt'],
+  abstract: ['abstract'],
+  modern: ['modern', 'contemporary'],
+  impressionism: ['impressionism', 'impressionist'],
+  landscape: ['landscape', 'nature'],
+  flower: ['flower', 'floral', 'flowers'],
+  portrait: ['portrait', 'figurative']
+};
+
+const COLOR_TERMS = new Set([
+  'blue', 'azure', 'navy', 'indigo', 'cobalt', 'red', 'yellow', 'green',
+  'purple', 'orange', 'pink', 'gold', 'black', 'white', 'brown'
+]);
+
+export function findPortalDestination(message) {
   const query = String(message || '').toLowerCase();
 
-  if (!/(open|go to|take me|navigate|where|find|show me)/.test(query)) {
+  const wantsNavigation = /(open|go to|take me|navigate|where is|how do i (get|open|find)|take me to)/.test(query);
+
+  if (!wantsNavigation) {
     return null;
   }
 
@@ -32,23 +57,19 @@ function findPortalDestination(message) {
     : null;
 }
 
-function normaliseNavigation(navigation) {
-  if (!navigation || typeof navigation !== 'object') return null;
-
-  const destination = PORTAL_DESTINATIONS.find(
-    item => item.path === navigation.path
-  );
-
-  return destination
-    ? { path: destination.path, label: destination.label }
-    : null;
-}
-
-function findCatalogMatches(message, catalogContext) {
-  const terms = String(message || '')
+export function findCatalogMatches(message, catalogContext, limit = 4) {
+  const rawTerms = String(message || '')
     .toLowerCase()
-    .match(/[a-z]{3,}/g)
-    ?.filter(term => !['about', 'please', 'would', 'could', 'show', 'with', 'that', 'this', 'what', 'have', 'like', 'some', 'paintings', 'painting', 'artwork', 'artworks'].includes(term)) || [];
+    .match(/[a-z]{3,}/g) || [];
+
+  const terms = [...new Set(
+    rawTerms.flatMap(term => {
+      if (CHAT_STOP_WORDS.has(term)) return [];
+      return CHAT_SYNONYMS[term] || [term];
+    })
+  )];
+
+  if (!terms.length) return [];
 
   return catalogContext
     .map((painting) => {
@@ -58,21 +79,33 @@ function findCatalogMatches(message, catalogContext) {
         painting.category,
         painting.style,
         painting.medium,
+        painting.colorMedium,
         painting.colorTheme,
         ...(painting.tags || [])
       ].join(' ').toLowerCase();
 
-      return {
-        painting,
-        score: terms.reduce(
-          (total, term) => total + (searchable.includes(term) ? 1 : 0),
-          0
-        )
-      };
+      let score = terms.reduce((total, term) => {
+        if (!searchable.includes(term)) return total;
+        let points = 1;
+        if (String(painting.category || '').toLowerCase().includes(term)) points += 2;
+        if (String(painting.style || '').toLowerCase().includes(term)) points += 2;
+        if (String(painting.colorTheme || '').toLowerCase().includes(term)) points += 2;
+        if (String(painting.title || '').toLowerCase().includes(term)) points += 2;
+        if ((painting.tags || []).some(tag => String(tag).toLowerCase().includes(term))) points += 1;
+        return total + points;
+      }, 0);
+
+      const askedColors = terms.filter(term => COLOR_TERMS.has(term));
+      if (askedColors.length) {
+        const hasAskedColor = askedColors.some(color => searchable.includes(color));
+        score = hasAskedColor ? score + 6 : Math.max(0, score - 4);
+      }
+
+      return { painting, score };
     })
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 4)
+    .slice(0, limit)
     .map(({ painting }) => painting);
 }
 
@@ -98,10 +131,31 @@ function buildCatalogFallback(message, catalogContext) {
     };
   }
 
+  if (matches.length) {
+    const names = matches
+      .slice(0, 2)
+      .map(painting => `“${painting.title}” by ${painting.artist}`)
+      .join(' and ');
+
+    let intro = `Here are catalog matches for that request, including ${names}.`;
+
+    if (/impressionism/.test(query)) {
+      intro = 'Impressionism focuses on fleeting light, visible brushwork, and atmosphere rather than fine detail. ' + intro;
+    } else if (/abstract/.test(query)) {
+      intro = 'Abstract and modern works use colour, shape, and composition instead of a literal scene. ' + intro;
+    }
+
+    return {
+      reply: intro,
+      paintingIds: matches.map(painting => String(painting._id || painting.id)),
+      navigation: null
+    };
+  }
+
   if (/impressionism/.test(query)) {
     return {
       reply: 'Impressionism focuses on fleeting light, visible brushwork, and the atmosphere of a moment rather than fine detail. Artists often used broken colour and outdoor scenes to create a lively, immediate feeling.',
-      paintingIds: matches.map(painting => String(painting._id)),
+      paintingIds: [],
       navigation: null
     };
   }
@@ -109,20 +163,7 @@ function buildCatalogFallback(message, catalogContext) {
   if (/abstract/.test(query)) {
     return {
       reply: 'Abstract art uses colour, shape, texture, and composition to express an idea or feeling instead of depicting a scene literally. Try noticing which colours, rhythms, or forms draw your eye first.',
-      paintingIds: matches.map(painting => String(painting._id)),
-      navigation: null
-    };
-  }
-
-  if (matches.length) {
-    const names = matches
-      .slice(0, 2)
-      .map(painting => `“${painting.title}”`)
-      .join(' and ');
-
-    return {
-      reply: `I found ${names} in the collection. They are a good match for what you described—open either artwork to explore its artist, style, and visual details.`,
-      paintingIds: matches.map(painting => String(painting._id)),
+      paintingIds: [],
       navigation: null
     };
   }
@@ -134,164 +175,102 @@ function buildCatalogFallback(message, catalogContext) {
   };
 }
 
-function parseChatResponse(text) {
-  const cleanText = String(text || '')
-    .trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```$/, '');
-
-  return JSON.parse(cleanText);
+function compactCatalog(catalogContext) {
+  return catalogContext.slice(0, 8).map(painting => ({
+    title: painting.title,
+    artist: painting.artist,
+    category: painting.category,
+    style: painting.style,
+    colors: painting.colorTheme,
+    medium: painting.medium || painting.colorMedium
+  }));
 }
 
-export async function chatWithOpenAI(
+export async function streamChatReply({
   message,
   history = [],
-  catalogContext = []
-) {
-  const fallback = buildCatalogFallback(message, catalogContext);
+  catalogMatches = [],
+  signal,
+  onDelta
+}) {
+  const fallback = buildCatalogFallback(message, catalogMatches);
 
   if (!openai) {
     console.warn('[Chat] OPENAI_API_KEY is not configured; using catalog fallback.');
-    return fallback;
+    await onDelta(fallback.reply);
+    return;
   }
+
+  const catalogHint = compactCatalog(catalogMatches);
+  const recentHistory = history
+    .filter(item => item?.text)
+    .slice(-6)
+    .map(item => ({
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      content: String(item.text).slice(0, 500)
+    }));
 
   try {
-    const catalogText = catalogContext
-      .map(
-        painting =>
-          `ID: ${painting._id}
-Title: ${painting.title}
-Artist: ${painting.artist}
-Category: ${painting.category}
-Style: ${painting.style}
-Medium: ${painting.medium}
-Colors: ${painting.colorTheme}`
-      )
-      .join('\n\n');
-
-    const formattedHistory = history
-      .slice(-12)
-      .map(
-        item =>
-          `${item.role === 'user' ? 'User' : 'Assistant'}: ${item.text}`
-      )
-      .join('\n');
-
-    const response = await openai.responses.create({
+    const stream = await openai.chat.completions.create({
       model: CHAT_MODEL,
-      max_output_tokens: 450,
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'artmind_chat_response',
-          strict: true,
-          schema: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['reply', 'paintingIds', 'navigation'],
-            properties: {
-              reply: { type: 'string' },
-              paintingIds: {
-                type: 'array',
-                items: { type: 'string' }
-              },
-              navigation: {
-                anyOf: [
-                  { type: 'null' },
-                  {
-                    type: 'object',
-                    additionalProperties: false,
-                    required: ['label', 'path'],
-                    properties: {
-                      label: { type: 'string' },
-                      path: {
-                        type: 'string',
-                        enum: PORTAL_DESTINATIONS.map(item => item.path)
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
+      stream: true,
+      max_tokens: 180,
+      temperature: 0.4,
+      messages: [
+        {
+          role: 'system',
+          content: `You are ArtMind, a fast art-curator assistant for the ArtMind portal.
+Answer questions about paintings, artists, styles, and techniques in 2-4 short sentences.
+If matching catalog artworks are provided, mention one or two by title. Never invent artworks.
+Help users navigate Gallery, Search, Dashboard, AI Vision, and Analytics when asked.
+Keep replies concise.`
+        },
+        ...recentHistory,
+        {
+          role: 'user',
+          content: catalogHint.length
+            ? `${message}\n\nMatching catalog artworks:\n${JSON.stringify(catalogHint)}`
+            : message
         }
-      },
+      ]
+    }, signal ? { signal } : undefined);
 
-      instructions: `You are ArtMind, an AI art curator for the ArtMind AI Portal.
+    let streamed = false;
 
-Have a natural, helpful conversation about art. Answer questions about artists,
-styles, techniques, colours, and art appreciation clearly, even when the user
-is not explicitly asking for recommendations.
-
-You can help users navigate these pages in the ArtMind portal:
-- Gallery: /gallery
-- Dashboard: /dashboard
-- AI Vision: /ai-vision
-- Analytics: /analytics
-When a user asks to open, go to, find, or navigate to one of these areas, set
-the navigation object with its exact path. Otherwise, set navigation to null.
-
-You may only recommend specific artworks that exist in this catalog:
-
-${catalogText}
-
-When the user asks for painting recommendations, choose the most relevant paintings from the catalog.
-
-Return ONLY valid JSON in exactly this format:
-
-{
-  "reply": "Your friendly response to the user",
-  "paintingIds": ["ID1", "ID2"],
-  "navigation": null
-}
-
-If the user is not asking for painting recommendations, return:
-
-{
-  "reply": "Your response",
-  "paintingIds": [],
-  "navigation": null
-}
-
-IMPORTANT:
-- Never invent painting IDs.
-- Only use IDs that appear in the catalog.
-- Keep the reply friendly, accurate, and concise.
-- Preserve context from the recent conversation.`,
-
-      input: `${formattedHistory}
-
-User: ${message}`
-    });
-
-    const text = response.output_text.trim();
-
-    console.log('[OpenAI] Raw response:', text);
-
-    let parsed;
-
-    try {
-      parsed = parseChatResponse(text);
-    } catch (parseError) {
-      console.error('[OpenAI] Invalid JSON:', text);
-
-      return { ...fallback, reply: text || fallback.reply };
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content || '';
+      if (!delta) continue;
+      streamed = true;
+      await onDelta(delta);
     }
 
-    console.log('[OpenAI] Painting IDs:', parsed.paintingIds);
-
-    return {
-      reply: parsed.reply || '',
-      paintingIds: Array.isArray(parsed.paintingIds)
-        ? parsed.paintingIds.map(String)
-        : [],
-      navigation: normaliseNavigation(parsed.navigation)
-    };
-
+    if (!streamed) {
+      await onDelta(fallback.reply);
+    }
   } catch (error) {
+    if (error?.name === 'AbortError') return;
     console.error('[OpenAI] Chat error:', error.message);
-    return fallback;
+    await onDelta(fallback.reply);
   }
+}
+
+export async function chatWithOpenAI(message, history = [], catalogContext = []) {
+  let reply = '';
+  await streamChatReply({
+    message,
+    history,
+    catalogMatches: findCatalogMatches(message, catalogContext),
+    onDelta: (delta) => {
+      reply += delta;
+    }
+  });
+
+  const fallback = buildCatalogFallback(message, catalogContext);
+  return {
+    reply: reply || fallback.reply,
+    paintingIds: fallback.paintingIds,
+    navigation: fallback.navigation
+  };
 }
 
 /**

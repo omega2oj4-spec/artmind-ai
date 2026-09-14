@@ -5,6 +5,51 @@ import PaintingCard from './PaintingCard.jsx';
 import API_BASE from '../utils/api.js';
 import './ChatBot.css';
 
+async function readChatStream(response, onEvent) {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (!contentType.includes('text/event-stream') || !response.body) {
+    const data = await response.json();
+    onEvent({
+      type: 'meta',
+      paintings: data.paintings || [],
+      navigation: data.navigation || null
+    });
+    onEvent({ type: 'delta', text: data.reply || '' });
+    onEvent({ type: 'done' });
+    return;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const chunks = buffer.split('\n\n');
+    buffer = chunks.pop() || '';
+
+    for (const chunk of chunks) {
+      const line = chunk
+        .split('\n')
+        .find(part => part.startsWith('data: '));
+
+      if (!line) continue;
+
+      try {
+        onEvent(JSON.parse(line.slice(6)));
+      } catch {
+        // Ignore a partial or malformed SSE frame.
+      }
+    }
+  }
+
+  onEvent({ type: 'done' });
+}
+
 export default function ChatBot() {
   const location = useLocation();
 
@@ -64,10 +109,13 @@ export default function ChatBot() {
     setLoading(true);
 
     try {
-      const historyPayload = newMessages.map(m => ({
-        role: m.role,
-        text: m.text
-      }));
+      const historyPayload = newMessages
+        .slice(0, -1)
+        .slice(-6)
+        .map(m => ({
+          role: m.role,
+          text: m.text
+        }));
 
       const token = localStorage.getItem('artmind_token');
 
@@ -75,6 +123,7 @@ export default function ChatBot() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
@@ -87,17 +136,52 @@ export default function ChatBot() {
         throw new Error('Chat service error');
       }
 
-      const data = await res.json();
-
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          text: data.reply || 'Here are some catalog recommendations.',
-          paintings: data.paintings || [],
-          navigation: data.navigation || null
+          text: '',
+          paintings: [],
+          navigation: null,
+          streaming: true
         }
       ]);
+
+      await readChatStream(res, (event) => {
+        setMessages(prev => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (!last || last.role !== 'assistant') return prev;
+
+          if (event.type === 'meta') {
+            next[next.length - 1] = {
+              ...last,
+              paintings: event.paintings || [],
+              navigation: event.navigation || null
+            };
+            return next;
+          }
+
+          if (event.type === 'delta') {
+            next[next.length - 1] = {
+              ...last,
+              text: `${last.text || ''}${event.text || ''}`
+            };
+            return next;
+          }
+
+          if (event.type === 'done') {
+            next[next.length - 1] = {
+              ...last,
+              streaming: false,
+              text: last.text || 'Here are some catalog recommendations.'
+            };
+            return next;
+          }
+
+          return prev;
+        });
+      });
     } catch (err) {
       console.error('Chat error:', err);
 
@@ -301,7 +385,10 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
                     />
                   )}
 
-                  <p>{msg.text}</p>
+                  <p>
+                    {msg.text}
+                    {msg.streaming && <span className="chat-stream-cursor" aria-hidden="true" />}
+                  </p>
 
                   {msg.navigation && (
                     <Link
@@ -336,7 +423,7 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
 
             ))}
 
-            {loading && (
+            {loading && !messages.some(msg => msg.streaming) && (
               <div className="chat-bubble-container assistant">
 
                 <div className="chat-bubble assistant loading-dots">
@@ -389,6 +476,17 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
                 }
               >
                 Popular landscapes
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleSuggestion(
+                    'How do I open the gallery?'
+                  )
+                }
+              >
+                Open Gallery
               </button>
 
             </div>

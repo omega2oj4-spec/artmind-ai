@@ -183,6 +183,20 @@
   white-space: pre-line;
 }
 
+.chat-stream-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 0.9em;
+  margin-left: 3px;
+  background: #d4af37;
+  vertical-align: text-bottom;
+  animation: streamCursor 0.9s steps(1) infinite;
+}
+
+@keyframes streamCursor {
+  50% { opacity: 0; }
+}
+
 .chat-navigation-link {
   display: inline-flex;
   margin-top: 10px;
