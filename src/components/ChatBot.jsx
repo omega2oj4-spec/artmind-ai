@@ -13,7 +13,8 @@ export default function ChatBot() {
     {
       role: 'assistant',
       text: 'Hello! I am ArtMind, your AI Curator. Ask me about paintings, artists, styles, colors, or collections. I will remember the context while we chat.',
-      paintings: []
+      paintings: [],
+      navigation: null
     }
   ]);
   const [input, setInput] = useState('');
@@ -52,9 +53,10 @@ export default function ChatBot() {
     const newMessages = [
       ...messages,
       {
-        role: 'user',
-        text: userMsg,
-        paintings: []
+          role: 'user',
+          text: userMsg,
+          paintings: [],
+          navigation: null
       }
     ];
 
@@ -92,7 +94,8 @@ export default function ChatBot() {
         {
           role: 'assistant',
           text: data.reply || 'Here are some catalog recommendations.',
-          paintings: data.paintings || []
+          paintings: data.paintings || [],
+          navigation: data.navigation || null
         }
       ]);
     } catch (err) {
@@ -103,7 +106,8 @@ export default function ChatBot() {
         {
           role: 'assistant',
           text: 'I am experiencing a momentary connection pause. Please try asking again!',
-          paintings: []
+          paintings: [],
+          navigation: null
         }
       ]);
     } finally {
@@ -128,7 +132,8 @@ export default function ChatBot() {
         {
           role: 'assistant',
           text: 'Please choose an image file (JPEG, PNG, WebP, or GIF).',
-          paintings: []
+          paintings: [],
+          navigation: null
         }
       ]);
       return;
@@ -140,7 +145,8 @@ export default function ChatBot() {
         {
           role: 'assistant',
           text: 'That image is larger than 10 MB. Please choose a smaller artwork image.',
-          paintings: []
+          paintings: [],
+          navigation: null
         }
       ]);
       return;
@@ -154,7 +160,8 @@ export default function ChatBot() {
         role: 'user',
         text: 'Please analyze this painting.',
         imagePreview,
-        paintings: []
+        paintings: [],
+        navigation: null
       }
     ]);
 
@@ -198,7 +205,8 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
         {
           role: 'assistant',
           text: responseText,
-          paintings: data.similarPaintings || []
+          paintings: data.similarPaintings || [],
+          navigation: null
         }
       ]);
     } catch (err) {
@@ -209,7 +217,8 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
         {
           role: 'assistant',
           text: 'I could not analyze that image right now. Please try another artwork image.',
-          paintings: []
+          paintings: [],
+          navigation: null
         }
       ]);
     } finally {
@@ -293,6 +302,16 @@ ${analysis.summary || 'I could not generate a full analysis for this artwork.'}`
                   )}
 
                   <p>{msg.text}</p>
+
+                  {msg.navigation && (
+                    <Link
+                      className="chat-navigation-link"
+                      to={msg.navigation.path}
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {msg.navigation.label}
+                    </Link>
+                  )}
 
                   {msg.paintings && msg.paintings.length > 0 && (
                     <div className="chat-inline-paintings">

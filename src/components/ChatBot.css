@@ -183,6 +183,24 @@
   white-space: pre-line;
 }
 
+.chat-navigation-link {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 7px 11px;
+  border: 1px solid #d4af37;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5f4a20;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.chat-navigation-link:hover {
+  background: #d4af37;
+  color: #1a1918;
+}
+
 .chat-uploaded-image {
   display: block;
   width: 100%;

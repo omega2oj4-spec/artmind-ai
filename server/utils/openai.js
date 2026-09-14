@@ -9,6 +9,41 @@ const openai = process.env.OPENAI_API_KEY
 
 const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4.1-mini';
 
+const PORTAL_DESTINATIONS = [
+  { path: '/gallery', label: 'Open Gallery', terms: ['gallery', 'browse', 'collection', 'artworks', 'paintings'] },
+  { path: '/dashboard', label: 'Open Dashboard', terms: ['dashboard', 'activity', 'saved', 'favorites', 'profile'] },
+  { path: '/ai-vision', label: 'Open AI Vision', terms: ['ai vision', 'analyse', 'analyze', 'upload', 'identify'] },
+  { path: '/analytics', label: 'Open Analytics', terms: ['analytics', 'trending', 'insights', 'popular'] }
+];
+
+function findPortalDestination(message) {
+  const query = String(message || '').toLowerCase();
+
+  if (!/(open|go to|take me|navigate|where|find|show me)/.test(query)) {
+    return null;
+  }
+
+  const destination = PORTAL_DESTINATIONS.find(({ terms }) =>
+    terms.some(term => query.includes(term))
+  );
+
+  return destination
+    ? { path: destination.path, label: destination.label }
+    : null;
+}
+
+function normaliseNavigation(navigation) {
+  if (!navigation || typeof navigation !== 'object') return null;
+
+  const destination = PORTAL_DESTINATIONS.find(
+    item => item.path === navigation.path
+  );
+
+  return destination
+    ? { path: destination.path, label: destination.label }
+    : null;
+}
+
 function findCatalogMatches(message, catalogContext) {
   const terms = String(message || '')
     .toLowerCase()
@@ -44,26 +79,38 @@ function findCatalogMatches(message, catalogContext) {
 function buildCatalogFallback(message, catalogContext) {
   const query = String(message || '').trim().toLowerCase();
   const matches = findCatalogMatches(query, catalogContext);
+  const navigation = findPortalDestination(query);
   const greeting = /^(hi|hello|hey|good morning|good afternoon|good evening)[!. ]*$/i.test(query);
+
+  if (navigation) {
+    return {
+      reply: `I can take you to that part of ArtMind. Select “${navigation.label}” below.`,
+      paintingIds: [],
+      navigation
+    };
+  }
 
   if (greeting) {
     return {
       reply: 'Hello! I’m ArtMind, your art-curator assistant. I can talk through artists, styles, techniques, colour palettes, and help you find artworks in this collection.',
-      paintingIds: []
+      paintingIds: [],
+      navigation: null
     };
   }
 
   if (/impressionism/.test(query)) {
     return {
       reply: 'Impressionism focuses on fleeting light, visible brushwork, and the atmosphere of a moment rather than fine detail. Artists often used broken colour and outdoor scenes to create a lively, immediate feeling.',
-      paintingIds: matches.map(painting => String(painting._id))
+      paintingIds: matches.map(painting => String(painting._id)),
+      navigation: null
     };
   }
 
   if (/abstract/.test(query)) {
     return {
       reply: 'Abstract art uses colour, shape, texture, and composition to express an idea or feeling instead of depicting a scene literally. Try noticing which colours, rhythms, or forms draw your eye first.',
-      paintingIds: matches.map(painting => String(painting._id))
+      paintingIds: matches.map(painting => String(painting._id)),
+      navigation: null
     };
   }
 
@@ -75,13 +122,15 @@ function buildCatalogFallback(message, catalogContext) {
 
     return {
       reply: `I found ${names} in the collection. They are a good match for what you described—open either artwork to explore its artist, style, and visual details.`,
-      paintingIds: matches.map(painting => String(painting._id))
+      paintingIds: matches.map(painting => String(painting._id)),
+      navigation: null
     };
   }
 
   return {
     reply: 'I can help with art questions in a conversational way—ask about an artist, a movement such as Impressionism or Abstract art, a colour mood, or the kind of artwork you would like to discover.',
-    paintingIds: []
+    paintingIds: [],
+    navigation: null
   };
 }
 
@@ -131,12 +180,56 @@ Colors: ${painting.colorTheme}`
     const response = await openai.responses.create({
       model: CHAT_MODEL,
       max_output_tokens: 450,
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'artmind_chat_response',
+          strict: true,
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['reply', 'paintingIds', 'navigation'],
+            properties: {
+              reply: { type: 'string' },
+              paintingIds: {
+                type: 'array',
+                items: { type: 'string' }
+              },
+              navigation: {
+                anyOf: [
+                  { type: 'null' },
+                  {
+                    type: 'object',
+                    additionalProperties: false,
+                    required: ['label', 'path'],
+                    properties: {
+                      label: { type: 'string' },
+                      path: {
+                        type: 'string',
+                        enum: PORTAL_DESTINATIONS.map(item => item.path)
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
 
       instructions: `You are ArtMind, an AI art curator for the ArtMind AI Portal.
 
 Have a natural, helpful conversation about art. Answer questions about artists,
 styles, techniques, colours, and art appreciation clearly, even when the user
 is not explicitly asking for recommendations.
+
+You can help users navigate these pages in the ArtMind portal:
+- Gallery: /gallery
+- Dashboard: /dashboard
+- AI Vision: /ai-vision
+- Analytics: /analytics
+When a user asks to open, go to, find, or navigate to one of these areas, set
+the navigation object with its exact path. Otherwise, set navigation to null.
 
 You may only recommend specific artworks that exist in this catalog:
 
@@ -148,14 +241,16 @@ Return ONLY valid JSON in exactly this format:
 
 {
   "reply": "Your friendly response to the user",
-  "paintingIds": ["ID1", "ID2"]
+  "paintingIds": ["ID1", "ID2"],
+  "navigation": null
 }
 
 If the user is not asking for painting recommendations, return:
 
 {
   "reply": "Your response",
-  "paintingIds": []
+  "paintingIds": [],
+  "navigation": null
 }
 
 IMPORTANT:
@@ -189,7 +284,8 @@ User: ${message}`
       reply: parsed.reply || '',
       paintingIds: Array.isArray(parsed.paintingIds)
         ? parsed.paintingIds.map(String)
-        : []
+        : [],
+      navigation: normaliseNavigation(parsed.navigation)
     };
 
   } catch (error) {

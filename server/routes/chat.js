@@ -145,7 +145,8 @@ router.post('/', optionalAuth, async (req, res) => {
 
     return res.json({
       reply: botResponse.reply,
-      paintings: recommendedPaintings
+      paintings: recommendedPaintings,
+      navigation: botResponse.navigation || null
     });
 
   } catch (err) {
