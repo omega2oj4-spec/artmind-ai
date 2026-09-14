@@ -54,7 +54,9 @@ export default function AuthProvider({ children }) {
       return { success: false, requireAuth: true };
     }
 
-    const isFav = favorites.includes(paintingId);
+    const isFav = favorites.some((favoriteId) =>
+      String(favoriteId) === String(paintingId)
+    );
     const method = isFav ? 'DELETE' : 'POST';
 
     try {
@@ -69,6 +71,7 @@ export default function AuthProvider({ children }) {
       if (res.ok) {
         const data = await res.json();
         setFavorites(data.favorites || []);
+        window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
         return { success: true, isFavorite: !isFav };
       }
       return { success: false };

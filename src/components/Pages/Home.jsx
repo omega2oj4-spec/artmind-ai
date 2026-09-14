@@ -1,6 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useContext } from 'react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { AuthContext } from '../../context/AuthContext.jsx';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { homeArtworks } from '../../data/homeArtworks.js';
 import { proxyImageUrl } from '../../utils/api.js';
 import './Home.css';
@@ -36,34 +34,9 @@ const TypewriterText = ({ text, delay = 0 }) => {
 };
 
 const CarouselItem = ({ art }) => {
-  const { favorites, toggleFavorite } = useContext(AuthContext);
-  const artId = art.id || art._id;
-  const isFav = favorites?.some(favId => String(favId) === String(artId));
-
-  const handleFavoriteClick = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!artId) return;
-
-    const res = await toggleFavorite(artId);
-    if (res && res.requireAuth) {
-      alert('Please sign in to save your favorite artworks.');
-    }
-  };
-
   return (
     <a className="carousel-item" href={`#painting-${art.id}`} aria-label={`View ${art.title} in the gallery`}>
       <img src={proxyImageUrl(art.src)} alt={art.title} loading="lazy" referrerPolicy="no-referrer" />
-      <button
-        type="button"
-        className={`painting-fav-btn ${isFav ? 'active' : ''}`}
-        onClick={handleFavoriteClick}
-        aria-label={isFav ? `Remove ${art.title || 'artwork'} from favorites` : `Add ${art.title || 'artwork'} to favorites`}
-        title={isFav ? "Remove from favorites" : "Add to favorites"}
-      >
-        {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
-      </button>
-      
       <div className="artwork-info-always-visible">
         <h3 className="artwork-title">
           <TypewriterText text={art.title} />

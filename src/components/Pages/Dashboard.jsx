@@ -23,6 +23,7 @@ export default function Dashboard() {
   const {
     user,
     token,
+    favorites,
     loading: authLoading
   } = useContext(AuthContext);
 
@@ -46,10 +47,10 @@ export default function Dashboard() {
       return;
     }
 
-    fetchDashboard();
+    fetchDashboard(true);
 
     const refreshActivity = () => {
-      fetchDashboard();
+      fetchDashboard(false);
     };
 
     window.addEventListener(
@@ -65,8 +66,8 @@ export default function Dashboard() {
     };
   }, [authLoading, user, token]);
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
 
     try {
       const headers = {};
@@ -122,14 +123,18 @@ export default function Dashboard() {
     }
   };
 
-  const summary = data.activitySummary || {
+  const summary = {
     viewedCount: 0,
-    savedCount: 0,
+    savedCount: favorites.length,
     searchCount: 0,
     latestAction: {
       label:
         'Start exploring the gallery to personalise this overview.'
-    }
+    },
+    ...(data.activitySummary || {}),
+    // Favorites are stored in context, so this metric is never held up by a
+    // network refresh after a user saves or removes an artwork.
+    savedCount: favorites.length
   };
 
   const categories =
