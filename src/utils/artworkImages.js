@@ -8,6 +8,9 @@ const replacementArtworkImages = [
   'https://i.pinimg.com/1200x/ea/e2/08/eae208e761ba2dd81df1414ede874956.jpg'
 ];
 
+// Track used replacement images to avoid duplicates
+const usedReplacementImages = new Map();
+
 function getStableIndex(value) {
   return [...String(value || '')].reduce(
     (hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0,
@@ -17,11 +20,37 @@ function getStableIndex(value) {
 
 export function getArtworkImageUrl(painting) {
   const imageUrl = painting?.imageUrl || painting?.image_url || painting?.src || painting?.thumbnail || '';
+  const paintingId = painting?._id || painting?.id || painting?.catalogId || painting?.title;
 
   // The current Art Institute CDN is not reachable from this deployment.
   // Use the supplied, reachable replacement artwork images for those records.
   if (imageUrl.includes('www.artic.edu/iiif/')) {
-    return replacementArtworkImages[getStableIndex(painting?._id || painting?.id || painting?.title)];
+    // Check if we already assigned a replacement image to this painting
+    if (usedReplacementImages.has(paintingId)) {
+      return usedReplacementImages.get(paintingId);
+    }
+
+    // Find an unused replacement image
+    let index = getStableIndex(paintingId);
+    let attempts = 0;
+    const maxAttempts = replacementArtworkImages.length;
+
+    while (attempts < maxAttempts) {
+      const candidateImage = replacementArtworkImages[index];
+      const isUsed = Array.from(usedReplacementImages.values()).includes(candidateImage);
+
+      if (!isUsed) {
+        usedReplacementImages.set(paintingId, candidateImage);
+        return candidateImage;
+      }
+
+      // Try the next index
+      index = (index + 1) % replacementArtworkImages.length;
+      attempts++;
+    }
+
+    // If all images are used, fall back to the hashed one
+    return replacementArtworkImages[getStableIndex(paintingId)];
   }
 
   return imageUrl;

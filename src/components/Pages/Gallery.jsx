@@ -406,20 +406,28 @@ export default function Gallery() {
         )
       );
       const homeImageUrls = new Set(
-        homePaintings.map((item) => String(item.src || item.imageUrl))
+        homePaintings.map((item) => {
+          const url = String(item.src || item.imageUrl || '');
+          // Normalize URL by removing query parameters and common variations
+          return url.split('?')[0].replace(/\/$/, '');
+        })
       );
 
       const galleryPaintings =
         Array.isArray(data) && data.length > 0
           ? [
               ...homePaintings,
-              ...data.filter((painting) => (
-                !homeIds.has(String(painting.catalogId || painting._id)) &&
-                !homeTitles.has(
-                  `${painting.title}|${painting.artist}`.toLowerCase()
-                ) &&
-                !homeImageUrls.has(String(painting.src || painting.imageUrl))
-              ))
+              ...data.filter((painting) => {
+                const paintingUrl = String(painting.src || painting.imageUrl || '');
+                const normalizedUrl = paintingUrl.split('?')[0].replace(/\/$/, '');
+                return (
+                  !homeIds.has(String(painting.catalogId || painting._id)) &&
+                  !homeTitles.has(
+                    `${painting.title}|${painting.artist}`.toLowerCase()
+                  ) &&
+                  !homeImageUrls.has(normalizedUrl)
+                );
+              })
             ]
           : homePaintings;
 
