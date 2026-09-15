@@ -91,6 +91,7 @@ export default function Gallery() {
   ] = useState(false);
 
   const resultsRef = useRef(null);
+  const galleryGridRef = useRef(null);
 
   /*
    * Keep filters synced with URL.
@@ -206,7 +207,8 @@ export default function Gallery() {
       return;
     }
 
-    resultsRef.current?.scrollIntoView({
+    // Scroll to the gallery grid (beginning of paintings)
+    galleryGridRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });
@@ -1062,7 +1064,7 @@ export default function Gallery() {
 
       ) : paintings.length > 0 ? (
 
-        <div className="gallery-grid">
+        <div className="gallery-grid" ref={galleryGridRef}>
 
           {paintings.map(
             (painting) => (
