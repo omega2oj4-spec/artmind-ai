@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../utils/api.js';
@@ -9,6 +9,7 @@ import './PaintingCard.css';
 export default function PaintingCard({ painting }) {
   if (!painting) return null;
 
+  const location = useLocation();
   const { favorites, toggleFavorite } = useContext(AuthContext);
   const paintingId = painting._id || painting.id || painting.catalogId;
   const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
@@ -69,7 +70,12 @@ export default function PaintingCard({ painting }) {
 
   return (
     <article className="painting-card" id={`painting-${paintingId}`} tabIndex="-1">
-      <Link to={`/painting/${paintingId}`} className="painting-card-link" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <Link
+        to={`/painting/${paintingId}`}
+        state={{ returnTo: location.pathname === '/dashboard' ? '/dashboard#gallery' : '/gallery' }}
+        className="painting-card-link"
+        style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}
+      >
         <div className="painting-card-image-wrapper">
           <img
             src={imageUrl}
