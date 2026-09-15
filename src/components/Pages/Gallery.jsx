@@ -405,6 +405,9 @@ export default function Gallery() {
           (item) => `${item.title}|${item.artist}`.toLowerCase()
         )
       );
+      const homeImageUrls = new Set(
+        homePaintings.map((item) => String(item.src || item.imageUrl))
+      );
 
       const galleryPaintings =
         Array.isArray(data) && data.length > 0
@@ -414,7 +417,8 @@ export default function Gallery() {
                 !homeIds.has(String(painting.catalogId || painting._id)) &&
                 !homeTitles.has(
                   `${painting.title}|${painting.artist}`.toLowerCase()
-                )
+                ) &&
+                !homeImageUrls.has(String(painting.src || painting.imageUrl))
               ))
             ]
           : homePaintings;
