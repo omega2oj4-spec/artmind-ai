@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   FaHeart,
@@ -52,6 +52,7 @@ export default function PaintingDetails() {
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [localIsFav, setLocalIsFav] = useState(false);
+  const isTogglingRef = useRef(false);
 
   const currentIds = [id, ...(painting ? paintingKeys(painting) : [])];
   const isFav = favorites?.some((favoriteId) =>
@@ -59,7 +60,10 @@ export default function PaintingDetails() {
   );
 
   useEffect(() => {
-    setLocalIsFav(isFav);
+    // Only sync if we're not in the middle of a toggle operation
+    if (!isTogglingRef.current) {
+      setLocalIsFav(isFav);
+    }
   }, [isFav]);
 
   useEffect(() => {
@@ -171,6 +175,9 @@ export default function PaintingDetails() {
   };
 
   const handleFavoriteToggle = async () => {
+    // Mark that we're toggling to prevent useEffect from overriding
+    isTogglingRef.current = true;
+
     // Optimistic UI update - immediately change heart color
     setLocalIsFav(!localIsFav);
 
@@ -179,12 +186,18 @@ export default function PaintingDetails() {
     if (res?.requireAuth) {
       alert('Please sign in to save your favorite artworks.');
       setLocalIsFav(isFav); // Revert if authentication required
+      isTogglingRef.current = false;
       return;
     }
 
     if (res && !res.success) {
       setLocalIsFav(isFav); // Revert if API call failed
     }
+
+    // Allow useEffect to sync again after a short delay
+    setTimeout(() => {
+      isTogglingRef.current = false;
+    }, 100);
 
     window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
   };

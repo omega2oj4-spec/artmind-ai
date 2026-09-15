@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -14,9 +14,13 @@ export default function PaintingCard({ painting }) {
   const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
   const isFav = favorites?.some((favId) => candidateIds.includes(String(favId)));
   const [localIsFav, setLocalIsFav] = useState(isFav);
+  const isTogglingRef = useRef(false);
 
   useEffect(() => {
-    setLocalIsFav(isFav);
+    // Only sync if we're not in the middle of a toggle operation
+    if (!isTogglingRef.current) {
+      setLocalIsFav(isFav);
+    }
   }, [isFav]);
 
   // Art Institute image URLs are protected by Cloudflare and return 403 in
@@ -43,6 +47,9 @@ export default function PaintingCard({ painting }) {
     e.stopPropagation();
     if (!paintingId) return;
 
+    // Mark that we're toggling to prevent useEffect from overriding
+    isTogglingRef.current = true;
+
     // Optimistic UI update - immediately change heart color
     setLocalIsFav(!localIsFav);
 
@@ -53,6 +60,11 @@ export default function PaintingCard({ painting }) {
     } else if (res && !res.success) {
       setLocalIsFav(isFav); // Revert if API call failed
     }
+
+    // Allow useEffect to sync again after a short delay
+    setTimeout(() => {
+      isTogglingRef.current = false;
+    }, 100);
   };
 
   return (
