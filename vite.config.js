@@ -25,21 +25,20 @@ export default defineConfig({
     // Enable code splitting and optimization
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['react-icons'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('react-icons')) {
+              return 'ui-vendor';
+            }
+            return 'vendor';
+          }
         }
       }
     },
     // Enable source maps for production debugging
-    sourcemap: true,
-    // Minify output
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true
-      }
-    }
+    sourcemap: true
   }
 })
