@@ -148,6 +148,20 @@ export default function Gallery() {
     }
   }, [location.key, location.state]);
 
+  // A return from Painting Details targets the embedded dashboard gallery.
+  // Scroll there once on route entry only; never tie this to artwork loading,
+  // otherwise it would override the visitor's own upward scroll.
+  useEffect(() => {
+    if (location.hash !== '#gallery') return;
+
+    requestAnimationFrame(() => {
+      document.getElementById('gallery')?.scrollIntoView({
+        behavior: 'auto',
+        block: 'start'
+      });
+    });
+  }, [location.key, location.hash]);
+
   /*
    * Keep filters synced with URL.
    */

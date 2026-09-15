@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   FaHeart,
   FaRegHeart,
@@ -44,7 +44,6 @@ function mergeSimilarPaintings(groups, currentIds, limit = 6) {
 
 export default function PaintingDetails() {
   const { id } = useParams();
-  const location = useLocation();
   const { favorites, toggleFavorite } = useContext(AuthContext);
 
   const [painting, setPainting] = useState(null);
@@ -232,7 +231,7 @@ export default function PaintingDetails() {
   return (
     <main className="painting-details-container">
       <div className="details-navigation">
-        <Link to={location.state?.returnTo || '/gallery'} className="back-link">
+        <Link to="/dashboard#gallery" className="back-link">
           <FaArrowLeft />
           Back to Gallery
         </Link>
