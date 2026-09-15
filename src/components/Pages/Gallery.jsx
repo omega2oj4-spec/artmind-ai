@@ -207,13 +207,24 @@ export default function Gallery() {
       return;
     }
 
-    // Scroll to the gallery grid (beginning of paintings)
-    galleryGridRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
-
-    setScrollToCategoryResults(false);
+    // Use setTimeout to ensure the DOM has updated with new paintings
+    setTimeout(() => {
+      // Scroll to the gallery grid (beginning of paintings)
+      galleryGridRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+      
+      // Fallback: scroll to results info if grid ref doesn't work
+      if (!galleryGridRef.current) {
+        resultsRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+      
+      setScrollToCategoryResults(false);
+    }, 100);
   }, [
     loading,
     paintings,
