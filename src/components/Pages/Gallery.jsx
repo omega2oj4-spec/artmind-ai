@@ -415,7 +415,9 @@ export default function Gallery() {
         galleryFilters
       );
       const homeIds = new Set(
-        homePaintings.map((item) => String(item.id))
+        homePaintings.flatMap((item) =>
+          [item._id, item.id, item.catalogId].filter(Boolean).map(String)
+        )
       );
       const homeTitles = new Set(
         homePaintings.map(
@@ -430,15 +432,16 @@ export default function Gallery() {
         })
       );
 
-      const galleryPaintings =
+      const rawPaintings =
         Array.isArray(data) && data.length > 0
           ? [
               ...homePaintings,
               ...data.filter((painting) => {
                 const paintingUrl = String(painting.src || painting.imageUrl || '');
                 const normalizedUrl = paintingUrl.split('?')[0].replace(/\/$/, '');
+                const apiId = String(painting.catalogId || painting._id || '');
                 return (
-                  !homeIds.has(String(painting.catalogId || painting._id)) &&
+                  !homeIds.has(apiId) &&
                   !homeTitles.has(
                     `${painting.title}|${painting.artist}`.toLowerCase()
                   ) &&
@@ -447,6 +450,19 @@ export default function Gallery() {
               })
             ]
           : homePaintings;
+
+      // Final dedup pass — eliminate any remaining duplicates by id then image url
+      const seenIds = new Set();
+      const seenUrls = new Set();
+      const galleryPaintings = rawPaintings.filter((painting) => {
+        const uid = String(painting._id || painting.id || painting.catalogId || '');
+        const imgUrl = String(painting.src || painting.imageUrl || '').split('?')[0].replace(/\/$/, '');
+        if (uid && seenIds.has(uid)) return false;
+        if (imgUrl && seenUrls.has(imgUrl)) return false;
+        if (uid) seenIds.add(uid);
+        if (imgUrl) seenUrls.add(imgUrl);
+        return true;
+      });
 
       setPaintings(
         galleryPaintings
@@ -1082,7 +1098,9 @@ export default function Gallery() {
               <PaintingCard
                 key={
                   painting._id ||
-                  painting.id
+                  painting.id ||
+                  painting.catalogId ||
+                  (painting.src || painting.imageUrl || '').split('?')[0]
                 }
                 painting={painting}
               />
