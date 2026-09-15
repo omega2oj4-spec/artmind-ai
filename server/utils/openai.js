@@ -279,12 +279,18 @@ export async function chatWithOpenAI(message, history = [], catalogContext = [])
 export async function generateCuratorSummary(painting) {
   const fallback = `This masterpiece titled "${painting.title}" by ${painting.artist} (${painting.dateDisplay}) displays remarkable mastery in ${painting.medium}. Executed in a distinct ${painting.style} style, the artwork evokes deep emotion through its harmonious composition on ${painting.surface}. Featured in our ${painting.category} gallery, it reflects the artist's profound vision and enduring technique.`;
 
+  if (!openai) {
+    return fallback;
+  }
+
   try {
     const prompt = `You are a world-class art curator. Write an insightful, elegant curator-style summary of approximately 70 words for the following artwork:
 Title: ${painting.title}
 Artist: ${painting.artist}
+Artist details: ${painting.artistDetails || 'N/A'}
 Date: ${painting.dateDisplay}
 Medium: ${painting.medium}
+Color medium: ${painting.colorMedium || 'N/A'}
 Style: ${painting.style}
 Category: ${painting.category}
 Surface: ${painting.surface || 'N/A'}
@@ -293,7 +299,7 @@ Description: ${painting.description || 'N/A'}
 Keep the response concise, evocative, and around 70 words. Output raw text only without quotes or headers.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gemini-3.6-flash',
+      model: CHAT_MODEL,
       messages: [
         { role: 'user', content: prompt }
       ]

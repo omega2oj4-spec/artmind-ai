@@ -41,10 +41,21 @@ export function buildPaintingPDF(painting) {
   doc.setTextColor(100, 90, 80);
   doc.text(`By ${painting.artist || 'Unknown Artist'} (${painting.dateDisplay || 'Undated'})`, 15, 56);
 
+  // Artist details
+  let currentY = 63;
+  if (painting.artistDetails) {
+    doc.setFont('times', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    const artistLines = doc.splitTextToSize(painting.artistDetails, 180);
+    doc.text(artistLines, 15, currentY);
+    currentY += artistLines.length * 4.5 + 4;
+  }
+
   // Metadata Box
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(220, 215, 200);
-  doc.roundedRect(15, 63, 180, 45, 3, 3, 'FD');
+  doc.roundedRect(15, currentY, 180, 45, 3, 3, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
@@ -53,7 +64,7 @@ export function buildPaintingPDF(painting) {
   const labels = [
     ['Category:', painting.category || 'N/A'],
     ['Style:', painting.style || 'N/A'],
-    ['Medium:', painting.medium || 'N/A'],
+    ['Color Medium:', painting.colorMedium || painting.medium || 'N/A'],
     ['Surface:', painting.surface || 'N/A'],
     ['Color Theme:', painting.colorTheme || 'N/A'],
     ['Popularity Rating:', `${painting.popularity || 0} Points`]
@@ -61,7 +72,7 @@ export function buildPaintingPDF(painting) {
 
   labels.forEach((item, index) => {
     const col = index % 2 === 0 ? 20 : 105;
-    const row = 72 + Math.floor(index / 2) * 11;
+    const row = currentY + 9 + Math.floor(index / 2) * 11;
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(140, 115, 85);
     doc.text(item[0], col, row);
@@ -71,7 +82,7 @@ export function buildPaintingPDF(painting) {
   });
 
   // Description Section
-  let currentY = 118;
+  currentY += 55;
   if (painting.description) {
     doc.setFont('times', 'bold');
     doc.setFontSize(14);

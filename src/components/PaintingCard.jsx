@@ -10,8 +10,9 @@ export default function PaintingCard({ painting }) {
   if (!painting) return null;
 
   const { favorites, toggleFavorite } = useContext(AuthContext);
-  const paintingId = painting._id || painting.id;
-  const isFav = favorites?.some(favId => String(favId) === String(paintingId));
+  const paintingId = painting._id || painting.id || painting.catalogId;
+  const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
+  const isFav = favorites?.some((favId) => candidateIds.includes(String(favId)));
 
   // Art Institute image URLs are protected by Cloudflare and return 403 in
   // production. Convert those records to a verified fallback before proxying.

@@ -1,8 +1,11 @@
 import express from 'express';
 import Painting from '../models/Painting.js';
+import User from '../models/User.js';
 import { generateCuratorSummary } from '../utils/openai.js';
 import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
+import { findPaintingByAnyId, findSimilarPaintings } from '../utils/catalogSync.js';
+import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -187,29 +190,21 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/paintings/:id
- * Returns painting details + 4-6 similar paintings
+ * Returns painting details + 4-6 similar paintings.
+ * Accepts Mongo IDs and home-gallery catalog IDs.
  */
 router.get('/:id', async (req, res) => {
   try {
-    const painting = await Painting.findById(req.params.id);
+    const painting = await findPaintingByAnyId(req.params.id);
     if (!painting) {
       return res.status(404).json({ error: 'Painting not found' });
     }
 
-    // Increment popularity & views count
     painting.popularity += 1;
     painting.viewsCount += 1;
     await painting.save();
 
-    // Fetch 4 to 6 similar paintings (same category or style, excluding current painting)
-    const similarPaintings = await Painting.find({
-      _id: { $ne: painting._id },
-      $or: [
-        { category: painting.category },
-        { style: painting.style },
-        { tags: { $in: painting.tags || [] } }
-      ]
-    }).limit(6);
+    const similarPaintings = await findSimilarPaintings(painting, 6);
 
     return res.json({
       painting,
@@ -222,12 +217,47 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * POST /api/paintings/:id/view
+ * Records a view for Mongo or catalog artwork IDs.
+ */
+router.post('/:id/view', optionalAuth, async (req, res) => {
+  try {
+    const painting = await findPaintingByAnyId(req.params.id);
+    if (!painting) {
+      return res.status(404).json({ error: 'Painting not found' });
+    }
+
+    if (req.user) {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.viewHistory.unshift({
+          painting: painting._id,
+          viewedAt: new Date()
+        });
+        if (user.viewHistory.length > 50) {
+          user.viewHistory = user.viewHistory.slice(0, 50);
+        }
+        await user.save();
+      }
+    }
+
+    return res.json({
+      message: 'View recorded',
+      viewsCount: painting.viewsCount
+    });
+  } catch (err) {
+    console.error('Error logging painting view:', err);
+    return res.status(500).json({ error: 'Error logging view' });
+  }
+});
+
+/**
  * POST /api/paintings/:id/summary
  * Calls Gemini once per painting, caches summary on document
  */
 router.post('/:id/summary', async (req, res) => {
   try {
-    const painting = await Painting.findById(req.params.id);
+    const painting = await findPaintingByAnyId(req.params.id);
     if (!painting) {
       return res.status(404).json({ error: 'Painting not found' });
     }
@@ -253,7 +283,7 @@ router.post('/:id/summary', async (req, res) => {
  */
 router.get('/:id/export/pdf', async (req, res) => {
   try {
-    const painting = await Painting.findById(req.params.id);
+    const painting = await findPaintingByAnyId(req.params.id);
     if (!painting) return res.status(404).send('Painting not found');
 
     if (!painting.aiSummary) {
@@ -278,7 +308,7 @@ router.get('/:id/export/pdf', async (req, res) => {
  */
 router.get('/:id/export/docx', async (req, res) => {
   try {
-    const painting = await Painting.findById(req.params.id);
+    const painting = await findPaintingByAnyId(req.params.id);
     if (!painting) return res.status(404).send('Painting not found');
 
     if (!painting.aiSummary) {

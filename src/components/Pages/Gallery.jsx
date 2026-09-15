@@ -17,8 +17,7 @@ import {
 } from 'react-icons/fa';
 
 import {
-  getHomeGalleryArtworks,
-  getSubmittedAbstractArtworks
+  getHomeGalleryArtworks
 } from '../../data/homeArtworks.js';
 import API_BASE from '../../utils/api.js';
 import './Gallery.css';
@@ -395,17 +394,30 @@ export default function Gallery() {
         search: searchQuery
       };
 
+      const homePaintings = getHomeGalleryArtworks(
+        galleryFilters
+      );
+      const homeIds = new Set(
+        homePaintings.map((item) => String(item.id))
+      );
+      const homeTitles = new Set(
+        homePaintings.map(
+          (item) => `${item.title}|${item.artist}`.toLowerCase()
+        )
+      );
+
       const galleryPaintings =
         Array.isArray(data) && data.length > 0
           ? [
-              ...data,
-              ...getSubmittedAbstractArtworks(
-                galleryFilters
-              )
+              ...homePaintings,
+              ...data.filter((painting) => (
+                !homeIds.has(String(painting.catalogId || painting._id)) &&
+                !homeTitles.has(
+                  `${painting.title}|${painting.artist}`.toLowerCase()
+                )
+              ))
             ]
-          : getHomeGalleryArtworks(
-              galleryFilters
-            );
+          : homePaintings;
 
       setPaintings(
         galleryPaintings

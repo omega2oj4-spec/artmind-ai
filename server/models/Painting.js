@@ -2,8 +2,10 @@ import mongoose from 'mongoose';
 
 const paintingSchema = new mongoose.Schema(
   {
+    catalogId: { type: String, index: true, unique: true, sparse: true, trim: true },
     title: { type: String, required: true, trim: true },
     artist: { type: String, required: true, default: 'Unknown Artist', trim: true },
+    artistDetails: { type: String, default: '' },
     dateDisplay: { type: String, default: 'Undated' },
     medium: { type: String, default: 'Oil on Canvas' },
     description: { type: String, default: '' },

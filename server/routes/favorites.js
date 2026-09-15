@@ -1,7 +1,11 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
 import User from '../models/User.js';
-import Painting from '../models/Painting.js';
+import {
+  findPaintingByAnyId,
+  canonicalFavoriteId,
+  resolveFavoritePaintings
+} from '../utils/catalogSync.js';
 
 const router = express.Router();
 
@@ -11,8 +15,9 @@ const router = express.Router();
  */
 router.get('/', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate('favorites');
-    return res.json(user ? user.favorites : []);
+    const user = await User.findById(req.user._id);
+    const favorites = await resolveFavoritePaintings(user?.favorites);
+    return res.json(favorites);
   } catch (err) {
     console.error('Error fetching favorites:', err);
     return res.status(500).json({ error: 'Server error retrieving favorites' });
@@ -21,21 +26,25 @@ router.get('/', protect, async (req, res) => {
 
 /**
  * POST /api/favorites/:paintingId
- * Saves painting as favorite
+ * Saves painting as favorite (Mongo ID or catalog ID)
  */
 router.post('/:paintingId', protect, async (req, res) => {
   try {
-    const painting = await Painting.findById(req.params.paintingId);
+    const painting = await findPaintingByAnyId(req.params.paintingId);
     if (!painting) {
       return res.status(404).json({ error: 'Painting not found' });
     }
 
     const user = await User.findById(req.user._id);
-    if (!user.favorites.includes(painting._id)) {
-      user.favorites.push(painting._id);
+    const favoriteId = canonicalFavoriteId(painting);
+    const alreadySaved = (user.favorites || []).some(
+      (id) => String(id) === favoriteId || String(id) === String(painting._id)
+    );
+
+    if (!alreadySaved) {
+      user.favorites.push(favoriteId);
       await user.save();
 
-      // Increment popularity
       painting.popularity += 2;
       await painting.save();
     }
@@ -53,8 +62,15 @@ router.post('/:paintingId', protect, async (req, res) => {
  */
 router.delete('/:paintingId', protect, async (req, res) => {
   try {
+    const painting = await findPaintingByAnyId(req.params.paintingId);
     const user = await User.findById(req.user._id);
-    user.favorites = user.favorites.filter(id => id.toString() !== req.params.paintingId);
+    const idsToRemove = new Set(
+      [req.params.paintingId, painting?._id, painting?.catalogId]
+        .filter(Boolean)
+        .map((id) => String(id))
+    );
+
+    user.favorites = (user.favorites || []).filter((id) => !idsToRemove.has(String(id)));
     await user.save();
 
     return res.json({ message: 'Removed from favorites', favorites: user.favorites });

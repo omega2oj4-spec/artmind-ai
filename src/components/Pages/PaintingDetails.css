@@ -112,18 +112,26 @@
   color: #1a1918;
 }
 
-.details-description h3, .ai-summary-block h3 {
+.details-description h3, .ai-summary-block h3, .details-artist-bio h3 {
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 1.2rem;
   color: #1a1918;
   margin: 0 0 8px 0;
 }
 
-.details-description p {
+.details-description p,
+.details-artist-bio p {
   color: #444444;
   line-height: 1.6;
   font-size: 0.95rem;
   margin: 0;
+}
+
+.details-artist-bio {
+  background: #fdfbf7;
+  border: 1px solid #e8e2d5;
+  border-radius: 12px;
+  padding: 16px 18px;
 }
 
 .ai-summary-block {
@@ -229,6 +237,17 @@
 
 .docx-btn:hover {
   background: #735d43;
+  transform: translateY(-2px);
+}
+
+.source-btn {
+  background: #ffffff;
+  color: #1a1918;
+  border: 1px solid #e8e2d5;
+}
+
+.source-btn:hover {
+  border-color: #8c7355;
   transform: translateY(-2px);
 }
 

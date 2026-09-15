@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaSearch, FaMagic, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import API_BASE from '../../utils/api.js';
+import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import './Search.css';
 
 export default function Search({ embedded = false }) {
@@ -40,10 +41,25 @@ export default function Search({ embedded = false }) {
       if (!res.ok) throw new Error('Search failed');
 
       const data = await res.json();
-      setResults(data.results || []);
+      const apiResults = data.results || [];
+      const homeResults = getHomeGalleryArtworks({ search: q });
+      const seen = new Set(
+        apiResults.map((painting) => `${painting.title}|${painting.artist}`.toLowerCase())
+      );
+      const merged = [
+        ...homeResults.filter((painting) => {
+          const key = `${painting.title}|${painting.artist}`.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }),
+        ...apiResults
+      ];
+      setResults(merged);
       window.dispatchEvent(new Event('artmind:activity-updated'));
     } catch (err) {
       console.error('Search error:', err);
+      setResults(getHomeGalleryArtworks({ search: q }));
     } finally {
       setLoading(false);
     }

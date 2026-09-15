@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { homeArtworks } from '../../data/homeArtworks.js';
+import { Link } from 'react-router-dom';
+import { homeArtworks, getHomeArtworkById } from '../../data/homeArtworks.js';
 import { proxyImageUrl } from '../../utils/api.js';
 import './Home.css';
 
@@ -34,20 +35,22 @@ const TypewriterText = ({ text, delay = 0 }) => {
 };
 
 const CarouselItem = ({ art }) => {
+  const artwork = getHomeArtworkById(art.id) || art;
+
   return (
-    <a className="carousel-item" href={`#painting-${art.id}`} aria-label={`View ${art.title} in the gallery`}>
-      <img src={proxyImageUrl(art.src)} alt={art.title} loading="lazy" referrerPolicy="no-referrer" />
+    <Link className="carousel-item" to={`/painting/${artwork.id}`} aria-label={`View ${artwork.title} details`}>
+      <img src={proxyImageUrl(artwork.src)} alt={artwork.title} loading="lazy" referrerPolicy="no-referrer" />
       <div className="artwork-info-always-visible">
         <h3 className="artwork-title">
-          <TypewriterText text={art.title} />
+          <TypewriterText text={artwork.title} />
         </h3>
-        {art.artist && (
+        {artwork.artist && (
           <p className="artwork-artist">
-            <TypewriterText text={art.artist} delay={art.title.length * 40} />
+            <TypewriterText text={artwork.artist} delay={artwork.title.length * 40} />
           </p>
         )}
       </div>
-    </a>
+    </Link>
   );
 };
 

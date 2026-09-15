@@ -68,6 +68,115 @@ export const homeArtworks = [
   { id: 'pinterest-a36947cc', src: 'https://i.pinimg.com/736x/a3/69/47/a36947cc19c4fc5bd263b658715d102f.jpg', title: 'A Man Sitting at a Table', artist: 'Artist not credited on Pinterest', category: 'Abstract', style: 'Modern Art', colorMedium: 'Acrylic', tags: ['pinterest', 'abstract', 'figure', 'table', 'chair', 'painting'], sourceUrl: 'https://www.pinterest.com/pin/1143421792925057602/' }
 ];
 
+const ARTIST_DETAILS = {
+  'Vincent van Gogh': 'Vincent van Gogh (1853–1890) was a Dutch Post-Impressionist whose intense colour, rhythmic brushwork, and emotional landscapes reshaped modern painting.',
+  'Salvador Dalí': 'Salvador Dalí (1904–1989) was a Spanish Surrealist known for dream imagery, precise draftsmanship, and uncanny symbolic landscapes.',
+  'Edvard Munch': 'Edvard Munch (1863–1944) was a Norwegian Expressionist whose psychologically charged figures and colour fields explore anxiety, memory, and modern life.',
+  'Caspar David Friedrich': 'Caspar David Friedrich (1774–1840) was a German Romantic landscape painter who placed solitary figures within vast, contemplative natural scenes.',
+  'Johannes Vermeer': 'Johannes Vermeer (1632–1675) was a Dutch Baroque painter celebrated for intimate interiors, pearl-like light, and quietly observed figures.',
+  'National Gallery of Art': 'These works are drawn from the National Gallery of Art collections, spanning historic European and American painting traditions.',
+  'Artallin': 'Artallin produces contemporary textured and impasto canvases that emphasise sculptural surface, saturated colour, and modern abstraction.',
+  'WaleVizion': 'WaleVizion is a contemporary painter whose expressionist portraits combine bold colour, facial distortion, and graphic energy.'
+};
+
+const COLOR_THEMES = [
+  'Warm & Vibrant',
+  'Cool Blue & Emerald',
+  'Golden Autumn',
+  'Rich Dark Tones',
+  'Pastel Harmony',
+  'Monochromatic & Earth'
+];
+
+function hashValue(value) {
+  return [...String(value || '')].reduce(
+    (hash, character) => (hash * 31 + character.charCodeAt(0)) >>> 0,
+    0
+  );
+}
+
+export function buildArtistDetails(artist, style, category) {
+  if (ARTIST_DETAILS[artist]) {
+    return ARTIST_DETAILS[artist];
+  }
+
+  const safeArtist = artist || 'Unknown Artist';
+  const safeStyle = style || 'contemporary';
+  const safeCategory = String(category || 'art').toLowerCase();
+  return `${safeArtist} is represented in the ArtMind collection. Their work is associated with ${safeStyle} and ${safeCategory} painting, contributing distinctive surfaces, colour media, and visual themes.`;
+}
+
+export function normalizeHomeArtwork(artwork) {
+  if (!artwork) return null;
+
+  const meta = homeGalleryMetadata[artwork.id] || {};
+  const merged = { ...artwork, ...meta };
+  const category = merged.category || 'Abstract';
+  const style = merged.style || 'Modern Art';
+  const colorMedium = merged.colorMedium || 'Acrylic';
+  const surface = merged.surface || 'Canvas';
+  const artist = merged.artist || 'Unknown Artist';
+  const title = merged.title || 'Untitled Artwork';
+  const tags = Array.isArray(merged.tags) ? merged.tags.filter(Boolean) : [];
+  const colorTheme = merged.colorTheme || COLOR_THEMES[hashValue(merged.id) % COLOR_THEMES.length];
+  const dateDisplay = merged.dateDisplay || 'Contemporary';
+  const medium = merged.medium || `${colorMedium} on ${surface}`;
+  const description = merged.description || `${title} is a ${style.toLowerCase()} ${category.toLowerCase()} work by ${artist}. Executed in ${colorMedium.toLowerCase()} on ${surface.toLowerCase()}, it presents a ${colorTheme.toLowerCase()} palette and a distinctive compositional presence within the ArtMind gallery.`;
+
+  return {
+    ...merged,
+    title,
+    artist,
+    artistDetails: merged.artistDetails || buildArtistDetails(artist, style, category),
+    category,
+    style,
+    colorMedium,
+    surface,
+    colorTheme,
+    dateDisplay,
+    medium,
+    description,
+    popularity: merged.popularity || 70,
+    viewsCount: merged.viewsCount || 0,
+    tags: tags.length ? tags : [category.toLowerCase(), style.toLowerCase(), colorMedium.toLowerCase(), surface.toLowerCase()],
+    imageUrl: merged.src || merged.imageUrl,
+    catalogId: merged.id,
+    isHomeArtwork: true
+  };
+}
+
+export function getHomeArtworkById(id) {
+  const artwork = homeArtworks.find((item) => item.id === id);
+  return artwork ? normalizeHomeArtwork(artwork) : null;
+}
+
+export function getSimilarHomeArtworks(painting, limit = 6) {
+  const currentId = painting?.id || painting?.catalogId;
+  const currentCategory = painting?.category;
+  const currentStyle = painting?.style;
+  const currentMedium = painting?.colorMedium;
+  const currentSurface = painting?.surface;
+  const currentTags = new Set((painting?.tags || []).map((tag) => String(tag).toLowerCase()));
+
+  return getHomeGalleryArtworks()
+    .filter((artwork) => artwork.id !== currentId)
+    .map((artwork) => {
+      let score = 0;
+      if (currentCategory && artwork.category === currentCategory) score += 6;
+      if (currentStyle && artwork.style === currentStyle) score += 5;
+      if (currentMedium && artwork.colorMedium === currentMedium) score += 3;
+      if (currentSurface && artwork.surface === currentSurface) score += 2;
+      (artwork.tags || []).forEach((tag) => {
+        if (currentTags.has(String(tag).toLowerCase())) score += 1;
+      });
+      return { artwork, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || (b.artwork.popularity || 0) - (a.artwork.popularity || 0))
+    .slice(0, limit)
+    .map((item) => item.artwork);
+}
+
 const homeGalleryMetadata = {
   'home-sunflowers': { surface: 'Canvas', popularity: 91 },
   'home-persistence-of-memory': { surface: 'Canvas', popularity: 95 },
@@ -153,14 +262,13 @@ const submittedAbstractArtworkIds = new Set([
 export function getHomeGalleryArtworks({ category = 'All', surface = 'All Surfaces', colorMedium = 'All Color Media', style = 'All Styles', minPopularity = 'Any Popularity', search = '' } = {}) {
   const query = search.trim().toLowerCase();
   return homeArtworks
-    .map((artwork) => ({ ...artwork, ...homeGalleryMetadata[artwork.id] }))
+    .map((artwork) => normalizeHomeArtwork(artwork))
     .filter((artwork) => category === 'All' || artwork.category === category)
     .filter((artwork) => surface === 'All Surfaces' || artwork.surface === surface)
     .filter((artwork) => colorMedium === 'All Color Media' || artwork.colorMedium === colorMedium)
     .filter((artwork) => style === 'All Styles' || artwork.style === style)
     .filter((artwork) => minPopularity === 'Any Popularity' || artwork.popularity >= Number(minPopularity))
-    .filter((artwork) => !query || [artwork.title, artwork.artist, artwork.category, artwork.style, ...artwork.tags].join(' ').toLowerCase().includes(query))
-    .map((artwork) => ({ ...artwork, imageUrl: artwork.src, isHomeArtwork: true }));
+    .filter((artwork) => !query || [artwork.title, artwork.artist, artwork.category, artwork.style, artwork.colorMedium, artwork.surface, ...(artwork.tags || [])].join(' ').toLowerCase().includes(query));
 }
 
 export function getSubmittedAbstractArtworks(filters = {}) {

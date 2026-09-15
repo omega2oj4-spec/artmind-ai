@@ -43,6 +43,20 @@ export async function buildPaintingDocx(painting) {
             ],
             spacing: { after: 240 }
           }),
+          new Paragraph({
+            text: 'Artist Details',
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 240, after: 120 }
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: painting.artistDetails || `${painting.artist || 'Unknown Artist'} is represented in the ArtMind collection.`,
+                size: 22
+              })
+            ],
+            spacing: { after: 240 }
+          }),
           new Table({
             width: { size: 100, type: WidthType.PERCENTAGE },
             rows: [
@@ -56,8 +70,8 @@ export async function buildPaintingDocx(painting) {
               }),
               new TableRow({
                 children: [
-                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Medium', bold: true })] })] }),
-                  new TableCell({ children: [new Paragraph({ text: painting.medium || 'N/A' })] }),
+                  new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Color Medium', bold: true })] })] }),
+                  new TableCell({ children: [new Paragraph({ text: painting.colorMedium || 'N/A' })] }),
                   new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Surface', bold: true })] })] }),
                   new TableCell({ children: [new Paragraph({ text: painting.surface || 'N/A' })] })
                 ]

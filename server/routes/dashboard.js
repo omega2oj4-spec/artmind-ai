@@ -2,6 +2,7 @@ import express from 'express';
 import { optionalAuth } from '../middleware/auth.js';
 import User from '../models/User.js';
 import Painting from '../models/Painting.js';
+import { resolveFavoritePaintings } from '../utils/catalogSync.js';
 
 const router = express.Router();
 
@@ -119,11 +120,13 @@ router.get('/', optionalAuth, async (req, res) => {
 
     if (req.user) {
       user = await User.findById(req.user._id)
-        .populate('favorites')
         .populate('viewHistory.painting');
     }
 
     const allPaintings = await Painting.find();
+    const favoritePaintings = user
+      ? await resolveFavoritePaintings(user.favorites)
+      : [];
 
     /**
      * ---------------------------------------------------------
@@ -172,7 +175,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const searches = user?.searchHistory || [];
     const views = user?.viewHistory || [];
-    const favorites = user?.favorites || [];
+    const favorites = favoritePaintings;
 
     const activitySummary = {
       viewedCount: views.length,

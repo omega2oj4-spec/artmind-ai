@@ -20,7 +20,7 @@ export default function AuthProvider({ children }) {
         })
         .then(data => {
           setUser(data.user);
-          setFavorites(data.user.favorites || []);
+          setFavorites((data.user.favorites || []).map((id) => String(id)));
         })
         .catch(() => {
           logout();
@@ -35,7 +35,7 @@ export default function AuthProvider({ children }) {
     localStorage.setItem('artmind_token', authToken);
     setToken(authToken);
     setUser(userData);
-    setFavorites(userData.favorites || []);
+    setFavorites((userData.favorites || []).map((id) => String(id)));
   };
 
   const register = (authToken, userData) => {
@@ -70,7 +70,7 @@ export default function AuthProvider({ children }) {
 
       if (res.ok) {
         const data = await res.json();
-        setFavorites(data.favorites || []);
+        setFavorites((data.favorites || []).map((id) => String(id)));
         window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
         return { success: true, isFavorite: !isFav };
       }

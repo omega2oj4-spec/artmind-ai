@@ -3,6 +3,7 @@ import multer from 'multer';
 import Painting from '../models/Painting.js';
 import { analyzeImageWithVision } from '../utils/openai.js';
 import { protect } from '../middleware/auth.js';
+import { findPaintingByAnyId } from '../utils/catalogSync.js';
 
 const router = express.Router();
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -223,9 +224,7 @@ router.post('/painting/:paintingId', protect, limitAnalysisRequests, async (req,
   try {
     const { paintingId } = req.params;
 
-    const painting = await Painting.findById(
-      paintingId
-    );
+    const painting = await findPaintingByAnyId(paintingId);
 
     if (!painting) {
       return res.status(404).json({

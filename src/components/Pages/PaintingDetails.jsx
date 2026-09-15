@@ -8,7 +8,6 @@ import {
   FaMagic,
   FaArrowLeft,
   FaAward,
-  FaPalette,
   FaEye,
   FaExternalLinkAlt
 } from 'react-icons/fa';
@@ -16,28 +15,31 @@ import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../../utils/api.js';
 import { getArtworkImageUrl } from '../../utils/artworkImages.js';
-import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
+import {
+  getHomeArtworkById,
+  getSimilarHomeArtworks
+} from '../../data/homeArtworks.js';
 import './PaintingDetails.css';
 
-function getLocalPainting(id) {
-  const artwork = getHomeGalleryArtworks()
-    .find((item) => item.id === id);
+function paintingKeys(painting) {
+  return [painting?._id, painting?.id, painting?.catalogId]
+    .filter(Boolean)
+    .map((value) => String(value));
+}
 
-  if (!artwork) {
-    return null;
+function mergeSimilarPaintings(groups, currentIds, limit = 6) {
+  const seen = new Set(currentIds.map(String));
+  const merged = [];
+
+  for (const painting of groups.flat().filter(Boolean)) {
+    const keys = paintingKeys(painting);
+    if (!keys.length || keys.some((key) => seen.has(key))) continue;
+    keys.forEach((key) => seen.add(key));
+    merged.push(painting);
+    if (merged.length >= limit) break;
   }
 
-  return {
-    ...artwork,
-    dateDisplay: artwork.dateDisplay || 'Contemporary',
-    medium: artwork.medium || `${artwork.colorMedium || 'Mixed media'} on ${artwork.surface || 'Canvas'}`,
-    surface: artwork.surface || 'Canvas',
-    colorTheme: artwork.colorTheme || 'Contemporary palette',
-    popularity: artwork.popularity || 0,
-    viewsCount: artwork.viewsCount || 0,
-    description: artwork.description || `${artwork.title} is an ${String(artwork.style || 'contemporary').toLowerCase()} ${String(artwork.category || 'art').toLowerCase()} work featured in the ArtMind gallery.`,
-    isHomeArtwork: true
-  };
+  return merged;
 }
 
 export default function PaintingDetails() {
@@ -47,222 +49,137 @@ export default function PaintingDetails() {
   const [painting, setPainting] = useState(null);
   const [similarPaintings, setSimilarPaintings] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
 
-  // AI Vision analysis
-  const [analysis, setAnalysis] = useState(null);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
-
-  const isFav = favorites?.includes(id);
-  const isLocalPainting = painting?.isHomeArtwork;
+  const currentIds = [id, ...(painting ? paintingKeys(painting) : [])];
+  const isFav = favorites?.some((favoriteId) =>
+    currentIds.some((key) => String(favoriteId) === String(key))
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
     fetchPaintingDetails();
     recordView();
-
-    // Reset AI analysis when user opens another painting
-    setAnalysis(null);
     setSummary('');
   }, [id]);
 
-  /**
-   * Load painting details
-   */
   const fetchPaintingDetails = async () => {
     setLoading(true);
 
-    const localPainting = getLocalPainting(id);
-
+    const localPainting = getHomeArtworkById(id);
     if (localPainting) {
       setPainting(localPainting);
-      setSimilarPaintings(
-        getHomeGalleryArtworks({
-          category: localPainting.category
-        })
-          .filter((artwork) => artwork.id !== id)
-          .slice(0, 6)
-      );
-      setLoading(false);
-      return;
+      setSimilarPaintings(getSimilarHomeArtworks(localPainting));
     }
 
     try {
       const res = await fetch(`${API_BASE}/api/paintings/${id}`);
 
       if (!res.ok) {
-        throw new Error('Artwork not found');
+        if (!localPainting) {
+          throw new Error('Artwork not found');
+        }
+        return;
       }
 
       const data = await res.json();
+      const apiPainting = data.painting;
+      const mergedPainting = {
+        ...(localPainting || {}),
+        ...apiPainting,
+        artistDetails: apiPainting.artistDetails || localPainting?.artistDetails,
+        description: apiPainting.description || localPainting?.description,
+        colorMedium: apiPainting.colorMedium || localPainting?.colorMedium,
+        surface: apiPainting.surface || localPainting?.surface
+      };
 
-      setPainting(data.painting);
-      setSimilarPaintings(data.similarPaintings || []);
+      setPainting(mergedPainting);
+      setSimilarPaintings(
+        mergeSimilarPaintings(
+          [data.similarPaintings || [], localPainting ? getSimilarHomeArtworks(localPainting) : []],
+          [id, ...paintingKeys(mergedPainting)]
+        )
+      );
 
-      if (data.painting.aiSummary) {
-        setSummary(data.painting.aiSummary);
+      if (apiPainting.aiSummary) {
+        setSummary(apiPainting.aiSummary);
+      } else {
+        generateSummary(id);
       }
     } catch (err) {
       console.error('Error loading painting details:', err);
+      if (localPainting) {
+        generateSummary(id);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Record that the user viewed this artwork
-   */
   const recordView = async () => {
-    if (getLocalPainting(id)) {
-      return;
-    }
-
     try {
       const token = localStorage.getItem('artmind_token');
-
       const headers = {};
-
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/api/views/${id}`, {
+      const res = await fetch(`${API_BASE}/api/paintings/${id}/view`, {
         method: 'POST',
         headers
       });
 
       if (res.ok) {
-        // Tell dashboard that user activity has changed
-        window.dispatchEvent(
-          new CustomEvent('artmind:activity-updated')
-        );
+        window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
       }
     } catch (err) {
       console.error('Could not record artwork view:', err);
     }
   };
 
-  /**
-   * AI Vision analysis of the EXACT painting being viewed
-   */
-  const handleAnalyzeArtwork = async () => {
-    setAnalysisLoading(true);
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/analyze/painting/${id}`,
-        {
-          method: 'POST'
-        }
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-
-        throw new Error(
-          errorData.error || 'Artwork analysis failed'
-        );
-      }
-
-      const data = await res.json();
-
-      console.log('[PaintingDetails] AI Analysis:', data);
-
-      setAnalysis(data.analysis || null);
-
-      // Replace similar paintings with AI-ranked results
-      setSimilarPaintings(
-        data.similarPaintings || []
-      );
-    } catch (err) {
-      console.error(
-        'Error analyzing artwork:',
-        err
-      );
-
-      alert(
-        'Unable to analyze this artwork right now. Please try again.'
-      );
-    } finally {
-      setAnalysisLoading(false);
-    }
-  };
-
-  /**
-   * Generate AI curator summary
-   */
-  const handleGenerateSummary = async () => {
-    if (isLocalPainting) {
-      setSummary(
-        painting.description ||
-          `${painting.title} is a curated ${String(painting.category || 'art').toLowerCase()} work in the ArtMind gallery.`
-      );
-      return;
-    }
-
+  const generateSummary = async (paintingId = id) => {
     setSummaryLoading(true);
 
     try {
-      const res = await fetch(
-        `${API_BASE}/api/paintings/${id}/summary`,
-        {
-          method: 'POST'
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/paintings/${paintingId}/summary`, {
+        method: 'POST'
+      });
 
       if (!res.ok) {
-        throw new Error(
-          'Summary generation failed'
-        );
+        throw new Error('Summary generation failed');
       }
 
       const data = await res.json();
-
       setSummary(data.summary);
     } catch (err) {
-      console.error(
-        'Error generating summary:',
-        err
-      );
-
+      console.error('Error generating summary:', err);
+      const fallbackPainting = getHomeArtworkById(paintingId) || painting;
       setSummary(
-        'This artwork displays distinctive artistic qualities, thoughtful composition, and a compelling visual character.'
+        fallbackPainting
+          ? `${fallbackPainting.title} by ${fallbackPainting.artist} is a ${String(fallbackPainting.style || 'contemporary').toLowerCase()} ${String(fallbackPainting.category || 'art').toLowerCase()} work in ${String(fallbackPainting.colorMedium || 'mixed media').toLowerCase()} on ${String(fallbackPainting.surface || 'canvas').toLowerCase()}. ${fallbackPainting.description || ''}`.trim()
+          : 'This artwork displays distinctive artistic qualities, thoughtful composition, and a compelling visual character.'
       );
     } finally {
       setSummaryLoading(false);
     }
   };
 
-  /**
-   * Add/remove artwork from favorites
-   */
   const handleFavoriteToggle = async () => {
     const res = await toggleFavorite(id);
 
     if (res?.requireAuth) {
-      alert(
-        'Please sign in to save your favorite artworks.'
-      );
+      alert('Please sign in to save your favorite artworks.');
       return;
     }
 
-    // Refresh dashboard activity
-    window.dispatchEvent(
-      new CustomEvent('artmind:activity-updated')
-    );
+    window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
   };
 
-  /**
-   * Loading state
-   */
-  if (loading) {
+  if (loading && !painting) {
     return (
       <div className="details-loading-container">
         <div className="details-skeleton-image"></div>
-
         <div className="details-skeleton-content">
           <div className="skeleton-line title"></div>
           <div className="skeleton-line subtitle"></div>
@@ -272,23 +189,12 @@ export default function PaintingDetails() {
     );
   }
 
-  /**
-   * Artwork not found
-   */
   if (!painting) {
     return (
       <div className="details-error-container">
         <h2>Artwork Not Found</h2>
-
-        <p>
-          The requested artwork record could not be
-          found in our catalog.
-        </p>
-
-        <Link
-          to="/gallery"
-          className="back-link"
-        >
+        <p>The requested artwork record could not be found in our catalog.</p>
+        <Link to="/gallery" className="back-link">
           <FaArrowLeft />
           Return to Gallery
         </Link>
@@ -298,22 +204,14 @@ export default function PaintingDetails() {
 
   return (
     <main className="painting-details-container">
-
-      {/* Navigation */}
       <div className="details-navigation">
-        <Link
-          to="/gallery"
-          className="back-link"
-        >
+        <Link to="/gallery" className="back-link">
           <FaArrowLeft />
           Back to Gallery
         </Link>
       </div>
 
-      {/* Main artwork information */}
       <div className="painting-details-grid">
-
-        {/* Artwork image */}
         <div className="details-image-section">
           <div className="details-image-wrapper">
             <img
@@ -325,46 +223,36 @@ export default function PaintingDetails() {
                 event.currentTarget.src = '/artwork-fallback.svg';
               }}
             />
-            {!isLocalPainting && (
-              <button
-                type="button"
-                className={`painting-fav-btn ${isFav ? 'active' : ''}`}
-                onClick={handleFavoriteToggle}
-                aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-                title={isFav ? "Remove from favorites" : "Add to favorites"}
-              >
-                {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
-              </button>
-            )}
+            <button
+              type="button"
+              className={`painting-fav-btn ${isFav ? 'active' : ''}`}
+              onClick={handleFavoriteToggle}
+              aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+            </button>
           </div>
 
-          {/* View count */}
           <div className="artwork-view-info">
             <FaEye />
-            <span>
-              {painting.viewsCount || 0} views
-            </span>
+            <span>{painting.viewsCount || 0} views</span>
           </div>
 
-          {/* ========================================
-              AI CURATOR SUMMARY
-          ======================================== */}
           <div className="ai-summary-block">
             <div className="summary-block-header">
               <h3>
                 <FaMagic color="#d4af37" />
-                AI Curator Insight
+                AI-Generated Artwork Summary
               </h3>
               {!summary && (
                 <button
                   type="button"
                   className="generate-summary-btn"
-                  onClick={handleGenerateSummary}
+                  onClick={() => generateSummary(id)}
                   disabled={summaryLoading}
                 >
-                  {summaryLoading
-                    ? 'Curating Insight...'
-                    : 'Generate Curator Summary'}
+                  {summaryLoading ? 'Curating Insight...' : 'Generate Curator Summary'}
                 </button>
               )}
             </div>
@@ -372,85 +260,56 @@ export default function PaintingDetails() {
               <p className="summary-text">{summary}</p>
             ) : (
               <p className="summary-placeholder">
-                Click above to call Gemini AI and generate an exclusive curator analysis for this work.
+                {summaryLoading
+                  ? 'Generating an exclusive curator analysis for this work...'
+                  : 'Click above to generate an AI curator summary for this artwork.'}
               </p>
             )}
           </div>
         </div>
 
-        {/* Artwork information */}
         <div className="details-info-section">
-
           <div className="details-header">
-
             <div className="details-tags">
               {painting.category && (
-                <span className="tag category-tag">
-                  {painting.category}
-                </span>
+                <span className="tag category-tag">{painting.category}</span>
               )}
-
               {painting.style && (
-                <span className="tag style-tag">
-                  {painting.style}
-                </span>
+                <span className="tag style-tag">{painting.style}</span>
               )}
-
               {painting.colorMedium && (
-                <span className="tag medium-tag">
-                  {painting.colorMedium}
-                </span>
+                <span className="tag medium-tag">{painting.colorMedium}</span>
               )}
             </div>
 
-            <h1 className="details-title">
-              {painting.title}
-            </h1>
-
+            <h1 className="details-title">{painting.title}</h1>
             <p className="details-artist">
-              By <strong>{painting.artist}</strong>{' '}
-              ({painting.dateDisplay})
+              By <strong>{painting.artist}</strong> ({painting.dateDisplay || 'Undated'})
             </p>
           </div>
 
-          {/* Metadata */}
+          {painting.artistDetails && (
+            <div className="details-artist-bio">
+              <h3>Artist Details</h3>
+              <p>{painting.artistDetails}</p>
+            </div>
+          )}
+
           <div className="details-meta-cards">
-
             <div className="meta-card">
-              <span className="meta-label">
-                Medium
-              </span>
-
-              <span className="meta-value">
-                {painting.medium}
-              </span>
+              <span className="meta-label">Surface Type</span>
+              <span className="meta-value">{painting.surface || 'Canvas'}</span>
             </div>
-
             <div className="meta-card">
-              <span className="meta-label">
-                Surface
-              </span>
-
-              <span className="meta-value">
-                {painting.surface}
-              </span>
+              <span className="meta-label">Color Medium</span>
+              <span className="meta-value">{painting.colorMedium || painting.medium || 'Mixed media'}</span>
             </div>
-
             <div className="meta-card">
-              <span className="meta-label">
-                Color Theme
-              </span>
-
-              <span className="meta-value">
-                {painting.colorTheme}
-              </span>
+              <span className="meta-label">Medium</span>
+              <span className="meta-value">{painting.medium || `${painting.colorMedium || 'Mixed media'} on ${painting.surface || 'Canvas'}`}</span>
             </div>
-
             <div className="meta-card">
-              <span className="meta-label">
-                Popularity
-              </span>
-
+              <span className="meta-label">Popularity</span>
               <span className="meta-value">
                 <FaAward color="#d4af37" />
                 {painting.popularity || 0} Pts
@@ -458,108 +317,74 @@ export default function PaintingDetails() {
             </div>
           </div>
 
-          {/* Artwork description */}
           {painting.description && (
             <div className="details-description">
-              <h3>Artwork Overview</h3>
-
-              <p>
-                {painting.description}
-              </p>
+              <h3>Painting Description</h3>
+              <p>{painting.description}</p>
             </div>
           )}
 
-
-
-          {/* ========================================
-              ACTION BUTTONS
-          ======================================== */}
           <div className="details-action-bar">
+            <button
+              type="button"
+              className={`fav-action-btn ${isFav ? 'active' : ''}`}
+              onClick={handleFavoriteToggle}
+            >
+              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+              {isFav ? 'In Your Favorites' : 'Save Favorite'}
+            </button>
 
-            {isLocalPainting ? (
-              painting.sourceUrl && (
-                <a
-                  href={painting.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="export-btn pdf-btn"
-                >
-                  <FaExternalLinkAlt />
-                  View Original Source
-                </a>
-              )
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className={`fav-action-btn ${
-                    isFav ? 'active' : ''
-                  }`}
-                  onClick={handleFavoriteToggle}
-                >
-                  {isFav ? (
-                    <FaHeart color="#ff477e" />
-                  ) : (
-                    <FaRegHeart />
-                  )}
+            <a
+              href={`${API_BASE}/api/paintings/${id}/export/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="export-btn pdf-btn"
+            >
+              <FaFilePdf />
+              Download PDF
+            </a>
 
-                  {isFav
-                    ? 'In Your Favorites'
-                    : 'Add to Favorites'}
-                </button>
+            <a
+              href={`${API_BASE}/api/paintings/${id}/export/docx`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="export-btn docx-btn"
+            >
+              <FaFileWord />
+              Download Word
+            </a>
 
-                <a
-                  href={`${API_BASE}/api/paintings/${id}/export/pdf`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="export-btn pdf-btn"
-                >
-                  <FaFilePdf />
-                  Export PDF
-                </a>
-
-                <a
-                  href={`${API_BASE}/api/paintings/${id}/export/docx`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="export-btn docx-btn"
-                >
-                  <FaFileWord />
-                  Export Word
-                </a>
-              </>
+            {painting.sourceUrl && (
+              <a
+                href={painting.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="export-btn source-btn"
+              >
+                <FaExternalLinkAlt />
+                View Original Source
+              </a>
             )}
           </div>
         </div>
       </div>
 
-      {/* ========================================
-          SIMILAR PAINTINGS
-      ======================================== */}
       {similarPaintings.length > 0 && (
         <section className="similar-paintings-section">
-
-          <h2 className="section-title">
-            Similar Masterworks
-          </h2>
-
+          <h2 className="section-title">Similar Artwork Recommendations</h2>
           <p className="section-subtitle">
-            Related works selected using category,
-            style, medium, colors, and visual
-            characteristics.
+            Related works selected using category, style, colour medium, surface, and visual characteristics.
           </p>
-
           <div className="similar-grid">
-            {similarPaintings.map(sim => (
+            {similarPaintings.map((sim) => (
               <PaintingCard
-                key={sim._id}
+                key={sim._id || sim.id || sim.catalogId}
                 painting={sim}
               />
             ))}
           </div>
         </section>
       )}
-
     </main>
   );
 }
