@@ -152,11 +152,14 @@ router.get('/download', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { category, style, surface, colorMedium, minPopularity, search } = req.query;
+    const { category, paintingType, style, surface, colorMedium, minPopularity, search } = req.query;
     const filter = {};
+    const selectedCategory = paintingType && paintingType !== 'All Types'
+      ? paintingType
+      : category;
 
-    if (category && category !== 'All') {
-      filter.category = category;
+    if (selectedCategory && selectedCategory !== 'All') {
+      filter.category = selectedCategory;
     }
     if (style && style !== 'All Styles') {
       filter.style = style;

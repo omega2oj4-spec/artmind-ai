@@ -42,8 +42,33 @@ const BLOCKED_API_TITLES = new Set([
   'wanderer above the sea of fog',
   'the starry night',
   'girl with a pearl earring',
-  'misty mountains'
+  'misty mountains',
+  'irises',
+  'water lily pond'
 ]);
+
+function matchesGalleryFilters(painting, filters) {
+  const query = String(filters.search || '').trim().toLowerCase();
+  const haystack = [
+    painting.title,
+    painting.artist,
+    painting.description,
+    painting.category,
+    painting.style,
+    painting.colorMedium,
+    painting.surface,
+    ...(painting.tags || [])
+  ].join(' ').toLowerCase();
+
+  return (
+    (filters.category === 'All' || painting.category === filters.category) &&
+    (filters.surface === 'All Surfaces' || painting.surface === filters.surface) &&
+    (filters.colorMedium === 'All Color Media' || painting.colorMedium === filters.colorMedium) &&
+    (filters.style === 'All Styles' || painting.style === filters.style) &&
+    (filters.minPopularity === 'Any Popularity' || Number(painting.popularity || 0) >= Number(filters.minPopularity)) &&
+    (!query || haystack.includes(query))
+  );
+}
 
 export default function Gallery() {
   const [searchParams, setSearchParams] =
@@ -329,12 +354,15 @@ export default function Gallery() {
       let url =
         `${API_BASE}/api/paintings?`;
 
-      if (
-        activeCategory !== 'All'
-      ) {
+      const selectedCategory =
+        selectedPaintingType !== 'All Types'
+          ? selectedPaintingType
+          : activeCategory;
+
+      if (selectedCategory !== 'All') {
         url +=
           `category=${encodeURIComponent(
-            activeCategory
+            selectedCategory
           )}&`;
       }
 
@@ -476,7 +504,7 @@ export default function Gallery() {
         if (imgUrl && seenUrls.has(imgUrl)) return false;
         if (uid) seenIds.add(uid);
         if (imgUrl) seenUrls.add(imgUrl);
-        return true;
+        return matchesGalleryFilters(painting, galleryFilters);
       });
 
       setPaintings(
@@ -958,6 +986,10 @@ export default function Gallery() {
                     Tempera
                   </option>
 
+                  <option>
+                    Mixed Media
+                  </option>
+
                 </select>
 
               </div>
@@ -1025,6 +1057,14 @@ export default function Gallery() {
 
                   <option>
                     Modern Art
+                  </option>
+
+                  <option>
+                    Contemporary Figurative
+                  </option>
+
+                  <option>
+                    Sacred Art
                   </option>
 
                 </select>
