@@ -51,11 +51,16 @@ export default function PaintingDetails() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState('');
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [localIsFav, setLocalIsFav] = useState(false);
 
   const currentIds = [id, ...(painting ? paintingKeys(painting) : [])];
   const isFav = favorites?.some((favoriteId) =>
     currentIds.some((key) => String(favoriteId) === String(key))
   );
+
+  useEffect(() => {
+    setLocalIsFav(isFav);
+  }, [isFav]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -166,11 +171,19 @@ export default function PaintingDetails() {
   };
 
   const handleFavoriteToggle = async () => {
+    // Optimistic UI update - immediately change heart color
+    setLocalIsFav(!localIsFav);
+
     const res = await toggleFavorite(id);
 
     if (res?.requireAuth) {
       alert('Please sign in to save your favorite artworks.');
+      setLocalIsFav(isFav); // Revert if authentication required
       return;
+    }
+
+    if (res && !res.success) {
+      setLocalIsFav(isFav); // Revert if API call failed
     }
 
     window.dispatchEvent(new CustomEvent('artmind:activity-updated'));
@@ -225,12 +238,12 @@ export default function PaintingDetails() {
             />
             <button
               type="button"
-              className={`painting-fav-btn ${isFav ? 'active' : ''}`}
+              className={`painting-fav-btn ${localIsFav ? 'active' : ''}`}
               onClick={handleFavoriteToggle}
-              aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
-              title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+              aria-label={localIsFav ? 'Remove from favorites' : 'Add to favorites'}
+              title={localIsFav ? 'Remove from favorites' : 'Add to favorites'}
             >
-              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+              {localIsFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
             </button>
           </div>
 
@@ -327,11 +340,11 @@ export default function PaintingDetails() {
           <div className="details-action-bar">
             <button
               type="button"
-              className={`fav-action-btn ${isFav ? 'active' : ''}`}
+              className={`fav-action-btn ${localIsFav ? 'active' : ''}`}
               onClick={handleFavoriteToggle}
             >
-              {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
-              {isFav ? 'In Your Favorites' : 'Save Favorite'}
+              {localIsFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+              {localIsFav ? 'In Your Favorites' : 'Save Favorite'}
             </button>
 
             <a

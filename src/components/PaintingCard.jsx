@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -13,6 +13,11 @@ export default function PaintingCard({ painting }) {
   const paintingId = painting._id || painting.id || painting.catalogId;
   const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
   const isFav = favorites?.some((favId) => candidateIds.includes(String(favId)));
+  const [localIsFav, setLocalIsFav] = useState(isFav);
+
+  useEffect(() => {
+    setLocalIsFav(isFav);
+  }, [isFav]);
 
   // Art Institute image URLs are protected by Cloudflare and return 403 in
   // production. Convert those records to a verified fallback before proxying.
@@ -38,9 +43,15 @@ export default function PaintingCard({ painting }) {
     e.stopPropagation();
     if (!paintingId) return;
 
+    // Optimistic UI update - immediately change heart color
+    setLocalIsFav(!localIsFav);
+
     const res = await toggleFavorite(paintingId);
     if (res && res.requireAuth) {
       alert('Please sign in to save your favorite artworks.');
+      setLocalIsFav(isFav); // Revert if authentication required
+    } else if (res && !res.success) {
+      setLocalIsFav(isFav); // Revert if API call failed
     }
   };
 
@@ -60,12 +71,12 @@ export default function PaintingCard({ painting }) {
           />
           <button
             type="button"
-            className={`painting-fav-btn ${isFav ? 'active' : ''}`}
+            className={`painting-fav-btn ${localIsFav ? 'active' : ''}`}
             onClick={handleFavoriteClick}
-            aria-label={isFav ? `Remove ${painting.title || 'artwork'} from favorites` : `Add ${painting.title || 'artwork'} to favorites`}
-            title={isFav ? "Remove from favorites" : "Add to favorites"}
+            aria-label={localIsFav ? `Remove ${painting.title || 'artwork'} from favorites` : `Add ${painting.title || 'artwork'} to favorites`}
+            title={localIsFav ? "Remove from favorites" : "Add to favorites"}
           >
-            {isFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+            {localIsFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
           </button>
           <button
             type="button"
