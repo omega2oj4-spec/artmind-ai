@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck, FaSyncAlt } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { FaChartLine, FaEye, FaAward, FaLayerGroup, FaMagic, FaUserCheck, FaSyncAlt, FaArrowRight } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import API_BASE from '../../utils/api.js';
@@ -46,6 +47,7 @@ export default function Analytics({ embedded = false }) {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [error, setError] = useState('');
+  const [hoveredStat, setHoveredStat] = useState(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -76,6 +78,44 @@ export default function Analytics({ embedded = false }) {
     ? analytics.topPaintings
     : analytics.topPaintings.filter(painting => painting.category === selectedCategory);
 
+  const handleStatClick = (statType) => {
+    // Handle different stat types with appropriate navigation
+    switch(statType) {
+      case 'views':
+        // Could navigate to recently viewed or popular artworks
+        break;
+      case 'category':
+        // Filter by top category
+        if (analytics.userStats?.topCategory) {
+          setSelectedCategory(analytics.userStats.topCategory);
+        }
+        break;
+      case 'style':
+        // Could filter by style or show style-based recommendations
+        break;
+      case 'searches':
+        // Navigate to search page
+        break;
+      default:
+        break;
+    }
+  };
+
+  const getStatAction = (statType) => {
+    switch(statType) {
+      case 'views':
+        return 'View your history';
+      case 'category':
+        return 'Explore top category';
+      case 'style':
+        return 'Discover similar art';
+      case 'searches':
+        return 'Start new search';
+      default:
+        return 'Learn more';
+    }
+  };
+
   return (
     <main id="analytics" className={`analytics-container ${embedded ? 'analytics-embedded' : ''}`}>
       <div className="analytics-header">
@@ -103,32 +143,68 @@ export default function Analytics({ embedded = false }) {
                 <FaUserCheck color="#d4af37" /> Personalized Behavior & AI Insights for {analytics.userStats.userName}
               </h2>
               <div className="analytics-stats-banner">
-                <div className="stat-box">
+                <div 
+                  className={`stat-box ${hoveredStat === 'views' ? 'stat-box-hovered' : ''}`}
+                  onClick={() => handleStatClick('views')}
+                  onMouseEnter={() => setHoveredStat('views')}
+                  onMouseLeave={() => setHoveredStat(null)}
+                >
                   <FaEye className="stat-icon" />
                   <div className="stat-data">
                     <span className="stat-number">{analytics.userStats.totalUserViews}</span>
                     <span className="stat-label">Artworks Viewed</span>
                   </div>
+                  <div className="stat-action">
+                    <span>{getStatAction('views')}</span>
+                    <FaArrowRight className="stat-action-icon" />
+                  </div>
                 </div>
-                <div className="stat-box">
+                <div 
+                  className={`stat-box ${hoveredStat === 'category' ? 'stat-box-hovered' : ''}`}
+                  onClick={() => handleStatClick('category')}
+                  onMouseEnter={() => setHoveredStat('category')}
+                  onMouseLeave={() => setHoveredStat(null)}
+                >
                   <FaLayerGroup className="stat-icon" />
                   <div className="stat-data">
                     <span className="stat-number">{analytics.userStats.topCategory}</span>
                     <span className="stat-label">Top Affinity Category</span>
                   </div>
+                  <div className="stat-action">
+                    <span>{getStatAction('category')}</span>
+                    <FaArrowRight className="stat-action-icon" />
+                  </div>
                 </div>
-                <div className="stat-box">
+                <div 
+                  className={`stat-box ${hoveredStat === 'style' ? 'stat-box-hovered' : ''}`}
+                  onClick={() => handleStatClick('style')}
+                  onMouseEnter={() => setHoveredStat('style')}
+                  onMouseLeave={() => setHoveredStat(null)}
+                >
                   <FaAward className="stat-icon" />
                   <div className="stat-data">
                     <span className="stat-number">{analytics.userStats.topStyle}</span>
                     <span className="stat-label">Favorite Art Style</span>
                   </div>
+                  <div className="stat-action">
+                    <span>{getStatAction('style')}</span>
+                    <FaArrowRight className="stat-action-icon" />
+                  </div>
                 </div>
-                <div className="stat-box">
+                <div 
+                  className={`stat-box ${hoveredStat === 'searches' ? 'stat-box-hovered' : ''}`}
+                  onClick={() => handleStatClick('searches')}
+                  onMouseEnter={() => setHoveredStat('searches')}
+                  onMouseLeave={() => setHoveredStat(null)}
+                >
                   <FaMagic className="stat-icon" />
                   <div className="stat-data">
                     <span className="stat-number">{analytics.userStats.searchesCount}</span>
                     <span className="stat-label">Art Searches</span>
+                  </div>
+                  <div className="stat-action">
+                    <span>{getStatAction('searches')}</span>
+                    <FaArrowRight className="stat-action-icon" />
                   </div>
                 </div>
               </div>

@@ -166,6 +166,52 @@
   align-items: center;
   gap: 20px;
   box-shadow: 0 8px 24px rgba(26, 25, 24, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(26, 25, 24, 0.12);
+  border-color: #d4af37;
+}
+
+.stat-box-hovered {
+  background: linear-gradient(135deg, #ffffff 0%, #fbf9f3 100%);
+  border-color: #d4af37;
+}
+
+.stat-action {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(212, 175, 55, 0.95), transparent);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #1a1918;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease;
+}
+
+.stat-box:hover .stat-action {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stat-action-icon {
+  transition: transform 0.3s ease;
+}
+
+.stat-box:hover .stat-action-icon {
+  transform: translateX(4px);
 }
 
 .stat-icon {
