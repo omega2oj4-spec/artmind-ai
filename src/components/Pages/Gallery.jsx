@@ -4,7 +4,7 @@ import React, {
   useRef
 } from 'react';
 
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import PaintingCard from '../PaintingCard.jsx';
 
@@ -73,6 +73,7 @@ function matchesGalleryFilters(painting, filters) {
 export default function Gallery() {
   const [searchParams, setSearchParams] =
     useSearchParams();
+  const location = useLocation();
 
   const [paintings, setPaintings] =
     useState([]);
@@ -130,6 +131,22 @@ export default function Gallery() {
 
   const resultsRef = useRef(null);
   const galleryGridRef = useRef(null);
+
+  // Detail pages explicitly request a clean gallery return.  Reset the document
+  // scroll position after this route mounts and ensure no stale inline overflow
+  // setting can prevent upward scrolling.
+  useEffect(() => {
+    document.documentElement.style.overflowY = 'auto';
+    document.body.style.overflowY = 'auto';
+
+    if (location.state?.resetScroll) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+    }
+  }, [location.key, location.state]);
 
   /*
    * Keep filters synced with URL.

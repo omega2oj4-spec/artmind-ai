@@ -231,7 +231,7 @@ export default function PaintingDetails() {
   return (
     <main className="painting-details-container">
       <div className="details-navigation">
-        <Link to="/gallery" className="back-link">
+        <Link to="/gallery" state={{ resetScroll: true }} className="back-link">
           <FaArrowLeft />
           Back to Gallery
         </Link>
