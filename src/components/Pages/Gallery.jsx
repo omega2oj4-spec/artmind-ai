@@ -234,6 +234,7 @@ export default function Gallery() {
 
     if (
       !paintingId ||
+      !paintingId.startsWith('painting-') ||
       !document.getElementById(
         paintingId
       )
