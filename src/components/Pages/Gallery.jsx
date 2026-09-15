@@ -32,6 +32,19 @@ const CATEGORIES = [
   'Religious'
 ];
 
+// Titles that exist in homeArtworks but also appear in MongoDB — block them from
+// the API results so they never render twice in the gallery.
+const BLOCKED_API_TITLES = new Set([
+  'two sisters (on the terrace)',
+  'sunflowers',
+  'the persistence of memory',
+  'the scream',
+  'wanderer above the sea of fog',
+  'the starry night',
+  'girl with a pearl earring',
+  'misty mountains'
+]);
+
 export default function Gallery() {
   const [searchParams, setSearchParams] =
     useSearchParams();
@@ -440,7 +453,9 @@ export default function Gallery() {
                 const paintingUrl = String(painting.src || painting.imageUrl || '');
                 const normalizedUrl = paintingUrl.split('?')[0].replace(/\/$/, '');
                 const apiId = String(painting.catalogId || painting._id || '');
+                const titleKey = String(painting.title || '').toLowerCase().trim();
                 return (
+                  !BLOCKED_API_TITLES.has(titleKey) &&
                   !homeIds.has(apiId) &&
                   !homeTitles.has(
                     `${painting.title}|${painting.artist}`.toLowerCase()
