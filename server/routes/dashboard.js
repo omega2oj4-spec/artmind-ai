@@ -59,6 +59,40 @@ const recencyWeight = date => {
   return 0.2;
 };
 
+const artworkImageKey = painting =>
+  String(painting?.imageUrl || painting?.image_url || painting?.src || '');
+
+const artworkIdKey = painting =>
+  String(painting?._id || painting?.id || painting?.catalogId || '');
+
+function uniqueArtworksInOrder(paintings, limit, excluded = []) {
+  const usedIds = new Set(excluded.map(artworkIdKey).filter(Boolean));
+  const usedImages = new Set(excluded.map(artworkImageKey).filter(Boolean));
+  const unique = [];
+
+  for (const painting of paintings) {
+    const id = artworkIdKey(painting);
+    const image = artworkImageKey(painting);
+    if (!painting || (id && usedIds.has(id)) || (image && usedImages.has(image))) continue;
+
+    if (id) usedIds.add(id);
+    if (image) usedImages.add(image);
+    unique.push(painting);
+    if (unique.length === limit) break;
+  }
+
+  return unique;
+}
+
+function randomUniqueArtworks(paintings, limit, excluded = []) {
+  const shuffled = [...paintings];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return uniqueArtworksInOrder(shuffled, limit, excluded);
+}
+
 /**
  * POST /api/views/:paintingId
  *
@@ -671,15 +705,26 @@ router.get('/', optionalAuth, async (req, res) => {
      * ---------------------------------------------------------
      */
 
-    const recommended =
-      scored
-        .slice(0, 8)
-        .map(item => item.painting);
+    let recommended = uniqueArtworksInOrder(
+      scored.map(item => item.painting),
+      8
+    );
 
-    const aiCurated =
-      scored
-        .slice(8, 14)
-        .map(item => item.painting);
+    // Curated works are intentionally varied on every dashboard refresh.  The
+    // source-image check prevents different records of the same image from
+    // appearing together in this collection.
+    let aiCurated = randomUniqueArtworks(
+      scored.slice(8, 36).map(item => item.painting),
+      6,
+      recommended
+    );
+
+    if (aiCurated.length < 6) {
+      aiCurated = uniqueArtworksInOrder(
+        [...aiCurated, ...randomUniqueArtworks(scored.map(item => item.painting), 6, [...recommended, ...aiCurated])],
+        6
+      );
+    }
 
     /**
      * ---------------------------------------------------------
@@ -704,19 +749,10 @@ router.get('/', optionalAuth, async (req, res) => {
             popularity: -1,
             viewsCount: -1
           })
-          .limit(14);
+          .limit(100);
 
-      recommended.splice(
-        0,
-        recommended.length,
-        ...popularPaintings.slice(0, 8)
-      );
-
-      aiCurated.splice(
-        0,
-        aiCurated.length,
-        ...popularPaintings.slice(8, 14)
-      );
+      recommended = uniqueArtworksInOrder(popularPaintings, 8);
+      aiCurated = randomUniqueArtworks(popularPaintings, 6, recommended);
     }
 
     /**

@@ -19,6 +19,22 @@ import { AuthContext } from '../../context/AuthContext.jsx';
 import API_BASE from '../../utils/api.js';
 import './Dashboard.css';
 
+const CURATION_REFRESH_MS = 5 * 60 * 1000;
+
+function uniqueArtworkCards(paintings, limit = 6) {
+  const seenIds = new Set();
+  const seenImages = new Set();
+
+  return paintings.filter((painting) => {
+    const id = String(painting?._id || painting?.id || painting?.catalogId || '');
+    const image = String(painting?.imageUrl || painting?.image_url || painting?.src || '');
+    if ((id && seenIds.has(id)) || (image && seenImages.has(image))) return false;
+    if (id) seenIds.add(id);
+    if (image) seenImages.add(image);
+    return true;
+  }).slice(0, limit);
+}
+
 export default function Dashboard() {
   const {
     user,
@@ -58,11 +74,17 @@ export default function Dashboard() {
       refreshActivity
     );
 
+    const curationTimer = window.setInterval(
+      () => fetchDashboard(false),
+      CURATION_REFRESH_MS
+    );
+
     return () => {
       window.removeEventListener(
         'artmind:activity-updated',
         refreshActivity
       );
+      window.clearInterval(curationTimer);
     };
   }, [authLoading, user]);
 
@@ -104,7 +126,7 @@ export default function Dashboard() {
           : [],
 
         aiCurated: Array.isArray(json.aiCurated)
-          ? json.aiCurated
+          ? uniqueArtworkCards(json.aiCurated)
           : [],
 
         activitySummary: json.activitySummary || null,
