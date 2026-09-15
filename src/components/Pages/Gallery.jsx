@@ -1,7 +1,8 @@
 import React, {
   useState,
   useEffect,
-  useRef
+  useRef,
+  useCallback
 } from 'react';
 
 import { useSearchParams } from 'react-router-dom';
@@ -19,7 +20,7 @@ import {
 import {
   getHomeGalleryArtworks
 } from '../../data/homeArtworks.js';
-import API_BASE from '../../utils/api.js';
+import API_BASE, { cachedFetch } from '../../utils/api.js';
 import './Gallery.css';
 
 const CATEGORIES = [
@@ -154,16 +155,12 @@ export default function Gallery() {
    * filters change.
    */
   useEffect(() => {
-    fetchPaintings();
-  }, [
-    activeCategory,
-    selectedStyle,
-    selectedSurface,
-    selectedColorMedium,
-    selectedPaintingType,
-    selectedPopularity,
-    searchQuery
-  ]);
+    const timer = setTimeout(() => {
+      fetchPaintings();
+    }, 300); // Debounce filter changes
+
+    return () => clearTimeout(timer);
+  }, [fetchPaintings]);
 
   /*
    * Scroll to painting from URL hash.
@@ -292,7 +289,7 @@ export default function Gallery() {
   /*
    * Fetch gallery paintings.
    */
-  const fetchPaintings = async () => {
+  const fetchPaintings = useCallback(async () => {
     setLoading(true);
 
     try {
@@ -367,17 +364,14 @@ export default function Gallery() {
           )}&`;
       }
 
-      const res =
-        await fetch(url);
+      const data =
+        await cachedFetch(url);
 
-      if (!res.ok) {
+      if (!data) {
         throw new Error(
           'Failed to load gallery paintings'
         );
       }
-
-      const data =
-        await res.json();
 
       const galleryFilters = {
         category:
@@ -472,7 +466,15 @@ export default function Gallery() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    activeCategory,
+    selectedStyle,
+    selectedSurface,
+    selectedColorMedium,
+    selectedPaintingType,
+    selectedPopularity,
+    searchQuery
+  ]);
 
   /*
    * Category button.

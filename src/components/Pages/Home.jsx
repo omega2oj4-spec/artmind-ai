@@ -200,7 +200,7 @@ export default function Home() {
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [shouldInfiniteScroll, carouselImages.length]);
+  }, [shouldInfiniteScroll]);
 
   return (
     <main className="home-container" id="home">

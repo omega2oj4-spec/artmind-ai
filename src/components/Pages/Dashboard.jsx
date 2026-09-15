@@ -16,7 +16,7 @@ import {
 
 import PaintingCard from '../PaintingCard.jsx';
 import { AuthContext } from '../../context/AuthContext.jsx';
-import API_BASE from '../../utils/api.js';
+import API_BASE, { cachedFetch } from '../../utils/api.js';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -64,7 +64,7 @@ export default function Dashboard() {
         refreshActivity
       );
     };
-  }, [authLoading, user, token]);
+  }, [authLoading, user]);
 
   const fetchDashboard = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -76,15 +76,13 @@ export default function Dashboard() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/api/dashboard`, {
+      const json = await cachedFetch(`${API_BASE}/api/dashboard`, {
         headers
       });
 
-      if (!res.ok) {
+      if (!json) {
         throw new Error('Dashboard load failed');
       }
-
-      const json = await res.json();
 
       setData({
         recentlyViewed: Array.isArray(json.recentlyViewed)

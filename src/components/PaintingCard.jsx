@@ -75,6 +75,7 @@ export default function PaintingCard({ painting }) {
             src={imageUrl}
             alt={painting.title}
             loading="lazy"
+            decoding="async"
             referrerPolicy="no-referrer"
             onError={(event) => {
               event.currentTarget.onerror = null;

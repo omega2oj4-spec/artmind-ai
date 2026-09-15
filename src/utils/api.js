@@ -38,4 +38,52 @@ export function proxyImageUrl(src) {
   return src;
 }
 
+// Simple in-memory cache for API responses
+const apiCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Cached fetch with automatic cache invalidation
+ */
+export async function cachedFetch(url, options = {}) {
+  const cacheKey = url + JSON.stringify(options);
+  const cached = apiCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+
+  const response = await fetch(url, options);
+  const data = await response.json();
+  
+  apiCache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+  
+  return data;
+}
+
+/**
+ * Debounce function to limit how often a function can be called
+ */
+export function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Clear all cached data
+ */
+export function clearApiCache() {
+  apiCache.clear();
+}
+
 export default API_BASE;

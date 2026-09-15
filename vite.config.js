@@ -19,5 +19,27 @@ export default defineConfig({
       proxyTimeout: 120000
     }
   }
-}
+},
+
+  build: {
+    // Enable code splitting and optimization
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['react-icons'],
+        }
+      }
+    },
+    // Enable source maps for production debugging
+    sourcemap: true,
+    // Minify output
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    }
+  }
 })
