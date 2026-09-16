@@ -111,7 +111,7 @@ export default function Home() {
       title: "The Persistence of Memory",
       artist: "Salvador Dalí",
       tags: ["oil", "surrealism", "clocks", "landscape", "dream", "time"]
-    },
+    },wher
     {
       src: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?q=80&w=600&auto=format&fit=crop",
       title: "The Scream",
