@@ -257,8 +257,21 @@ export default function PaintingDetails() {
               alt={painting.title}
               referrerPolicy="no-referrer"
               onError={(event) => {
-                event.currentTarget.onerror = null;
-                event.currentTarget.src = '/artwork-fallback.svg';
+                const image = event.currentTarget;
+                const directUrl = getArtworkImageUrl(painting);
+                if (!image.dataset.triedDirect && directUrl && image.src !== directUrl) {
+                  image.dataset.triedDirect = 'true';
+                  image.src = directUrl;
+                  return;
+                }
+                const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail;
+                if (!image.dataset.triedThumbnail && thumbnailUrl) {
+                  image.dataset.triedThumbnail = 'true';
+                  image.src = thumbnailUrl;
+                  return;
+                }
+                image.onerror = null;
+                image.src = '/artwork-fallback.svg';
               }}
             />
             <button

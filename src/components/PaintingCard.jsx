@@ -29,6 +29,27 @@ export default function PaintingCard({ painting }) {
   // proxy, while retaining the actual image supplied by the catalogue.
   const rawImageUrl = getArtworkImageUrl(painting);
   const imageUrl = proxyImageUrl(rawImageUrl);
+  const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail || '';
+
+  const handleImageError = (event) => {
+    const image = event.currentTarget;
+    // Render's proxy can occasionally time out on large IIIF files. Browser
+    // image requests do not need CORS, so retry the source image directly.
+    if (!image.dataset.triedDirect && rawImageUrl && imageUrl !== rawImageUrl) {
+      image.dataset.triedDirect = 'true';
+      image.src = rawImageUrl;
+      return;
+    }
+    // AIC includes a compact LQIP thumbnail in its artwork payload. It still
+    // represents the actual artwork when the full image is unavailable.
+    if (!image.dataset.triedThumbnail && thumbnailUrl) {
+      image.dataset.triedThumbnail = 'true';
+      image.src = thumbnailUrl;
+      return;
+    }
+    image.onerror = null;
+    image.src = '/artwork-fallback.svg';
+  };
 
   // Preserve the complete route (including gallery filters and search query)
   // so Painting Details can return through the browser history to this view.
@@ -92,10 +113,7 @@ export default function PaintingCard({ painting }) {
             loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"
-            onError={(event) => {
-              event.currentTarget.onerror = null;
-              event.currentTarget.src = '/artwork-fallback.svg';
-            }}
+            onError={handleImageError}
           />
           <button
             type="button"
