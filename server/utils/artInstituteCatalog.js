@@ -113,20 +113,34 @@ export async function hydrateArtInstituteThumbnails(paintings = []) {
     if (!response.ok) throw new Error(`Art Institute thumbnail request returned ${response.status}`);
     const body = await response.json();
     const sourceImages = new Map((body.data || []).map((item) => [Number(item.id), item]));
+    const savePromises = [];
     for (const painting of sourcePaintings) {
       const sourceArtwork = sourceImages.get(Number(painting.articId));
       if (!sourceArtwork) continue;
+      let changed = false;
       // Artwork IDs are stable while image identifiers can change. Always use
       // the current identifier returned by the authoritative artwork endpoint.
       if (sourceArtwork.image_id) {
-        painting.imageUrl = `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/843,/0/default.jpg`;
+        const freshUrl = `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/843,/0/default.jpg`;
+        if (painting.imageUrl !== freshUrl) {
+          painting.imageUrl = freshUrl;
+          changed = true;
+        }
       }
       if (!painting.thumbnailUrl) {
         const thumbnailUrl = sourceArtwork.thumbnail?.lqip
           || (sourceArtwork.image_id ? `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/200,/0/default.jpg` : '');
-        if (thumbnailUrl) painting.thumbnailUrl = thumbnailUrl;
+        if (thumbnailUrl) {
+          painting.thumbnailUrl = thumbnailUrl;
+          changed = true;
+        }
+      }
+      // Persist corrected URLs so stale image_ids in the DB are healed
+      if (changed && typeof painting.save === 'function') {
+        savePromises.push(painting.save().catch((err) => console.warn('[AICHydrate] save failed:', err.message)));
       }
     }
+    await Promise.all(savePromises);
   } finally {
     clearTimeout(timeout);
   }

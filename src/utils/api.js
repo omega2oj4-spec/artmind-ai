@@ -12,6 +12,7 @@ const API_BASE = import.meta.env.VITE_API_URL
 /**
  * CDN hosts that block direct browser hotlink requests (403 / broken images).
  * These must be fetched server-side through the proxy endpoint.
+ * Keep in sync with ALLOWED_IMAGE_HOSTS in server/routes/paintings.js.
  */
 const PROXIED_IMAGE_HOSTS = new Set([
   'www.artic.edu',
@@ -21,6 +22,9 @@ const PROXIED_IMAGE_HOSTS = new Set([
   'artallin.com',
   'mdl.artvee.com',
   'cdn.dribbble.com',
+  'images.unsplash.com',
+  'upload.wikimedia.org',
+  'lh3.googleusercontent.com',
 ]);
 
 /**
