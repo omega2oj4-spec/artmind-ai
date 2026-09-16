@@ -36,15 +36,10 @@ export default function PaintingCard({ painting }) {
 
   const handleImageError = (event) => {
     const image = event.currentTarget;
-    // Render's proxy can occasionally time out on large IIIF files. Browser
-    // image requests do not need CORS, so retry the source image directly.
-    if (!image.dataset.triedDirect && rawImageUrl && proxiedImageUrl !== rawImageUrl) {
-      image.dataset.triedDirect = 'true';
-      image.src = rawImageUrl;
-      return;
-    }
-    // AIC includes a compact LQIP thumbnail in its artwork payload. It still
-    // represents the actual artwork when the full image is unavailable.
+    // Direct cross-origin requests are blocked under COEP (NotSameOrigin), so
+    // skip the raw-URL fallback and go straight to the LQIP thumbnail.
+    // AIC includes a compact LQIP thumbnail in its artwork payload; it still
+    // represents the artwork when the full proxied image is unavailable.
     if (!image.dataset.triedThumbnail && thumbnailUrl) {
       image.dataset.triedThumbnail = 'true';
       image.src = thumbnailUrl;

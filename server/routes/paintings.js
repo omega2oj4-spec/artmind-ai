@@ -104,6 +104,9 @@ router.get('/proxy-image', async (req, res) => {
     // Cache 7 days in the browser so paintings don't re-fetch on every load
     res.setHeader('Cache-Control', 'public, max-age=604800');
     res.setHeader('Content-Type', contentType);
+    // Required when the page has Cross-Origin-Embedder-Policy: require-corp.
+    // Without this, browsers block proxied images with ERR_BLOCKED_BY_RESPONSE.NotSameOrigin.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
     // Buffer before sending. Some Node/Render combinations terminate the
     // Web-Streams `pipeTo` response early, causing the browser to receive a

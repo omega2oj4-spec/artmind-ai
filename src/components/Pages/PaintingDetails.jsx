@@ -258,12 +258,8 @@ export default function PaintingDetails() {
               referrerPolicy="no-referrer"
               onError={(event) => {
                 const image = event.currentTarget;
-                const directUrl = getArtworkImageUrl(painting);
-                if (!image.dataset.triedDirect && directUrl && image.src !== directUrl) {
-                  image.dataset.triedDirect = 'true';
-                  image.src = directUrl;
-                  return;
-                }
+                // Direct cross-origin requests are blocked under COEP (NotSameOrigin).
+                // Skip the raw-URL fallback; go straight to the LQIP thumbnail.
                 const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail;
                 if (!image.dataset.triedThumbnail && thumbnailUrl) {
                   image.dataset.triedThumbnail = 'true';
