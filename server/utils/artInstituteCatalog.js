@@ -101,10 +101,10 @@ export async function fetchArtInstituteArtworks({ query = 'painting', page = 1, 
  * dashboard response remains one Art Institute request, not one per card.
  */
 export async function hydrateArtInstituteThumbnails(paintings = []) {
-  const missing = paintings.filter((painting) => painting?.articId && !painting?.thumbnailUrl);
-  if (!missing.length) return paintings;
+  const sourcePaintings = paintings.filter((painting) => painting?.articId);
+  if (!sourcePaintings.length) return paintings;
 
-  const ids = [...new Set(missing.map((painting) => painting.articId))].slice(0, 25);
+  const ids = [...new Set(sourcePaintings.map((painting) => painting.articId))].slice(0, 25);
   const params = new URLSearchParams({ ids: ids.join(','), fields: 'id,thumbnail,image_id' });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -112,13 +112,20 @@ export async function hydrateArtInstituteThumbnails(paintings = []) {
     const response = await fetch(`https://api.artic.edu/api/v1/artworks?${params}`, { signal: controller.signal });
     if (!response.ok) throw new Error(`Art Institute thumbnail request returned ${response.status}`);
     const body = await response.json();
-    const thumbnails = new Map((body.data || []).map((item) => [
-      Number(item.id),
-      item.thumbnail?.lqip || (item.image_id ? `https://www.artic.edu/iiif/2/${item.image_id}/full/200,/0/default.jpg` : '')
-    ]));
-    for (const painting of missing) {
-      const thumbnailUrl = thumbnails.get(Number(painting.articId));
-      if (thumbnailUrl) painting.thumbnailUrl = thumbnailUrl;
+    const sourceImages = new Map((body.data || []).map((item) => [Number(item.id), item]));
+    for (const painting of sourcePaintings) {
+      const sourceArtwork = sourceImages.get(Number(painting.articId));
+      if (!sourceArtwork) continue;
+      // Artwork IDs are stable while image identifiers can change. Always use
+      // the current identifier returned by the authoritative artwork endpoint.
+      if (sourceArtwork.image_id) {
+        painting.imageUrl = `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/843,/0/default.jpg`;
+      }
+      if (!painting.thumbnailUrl) {
+        const thumbnailUrl = sourceArtwork.thumbnail?.lqip
+          || (sourceArtwork.image_id ? `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/200,/0/default.jpg` : '');
+        if (thumbnailUrl) painting.thumbnailUrl = thumbnailUrl;
+      }
     }
   } finally {
     clearTimeout(timeout);
