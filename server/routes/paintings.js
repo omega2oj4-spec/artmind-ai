@@ -6,6 +6,8 @@ import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 import { findPaintingByAnyId, findSimilarPaintings } from '../utils/catalogSync.js';
 import { fetchArtInstituteArtworks, hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
+import { fetchMetMuseumArtworks } from '../utils/metMuseumCatalog.js';
+import { fetchEuropeanaArtworks } from '../utils/europeanaCatalog.js';
 import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -21,7 +23,13 @@ const ALLOWED_IMAGE_HOSTS = new Set([
   'www.artic.edu',
   'lh3.googleusercontent.com',
   'upload.wikimedia.org',
-  'images.metmuseum.org'
+  'images.metmuseum.org',
+  // Europeana and partner museum CDNs
+  'iiif.europeana.eu',
+  'europeana-images.s3.amazonaws.com',
+  'api.europeana.eu',
+  'iiif.harvardartmuseums.org',
+  'media.nga.gov',
 ]);
 const DOWNLOADABLE_IMAGE_HOSTS = ALLOWED_IMAGE_HOSTS;
 
@@ -42,8 +50,23 @@ async function refreshCatalog(query) {
   // shared catalogue used by details, favorites, dashboards, and AI features.
   if (Date.now() - refreshedAt < 10 * 60 * 1000) return;
 
-  const artworks = await fetchArtInstituteArtworks({ query: cacheKey, limit: 100 });
-  await Promise.all(artworks.map(async (artwork) => {
+  // Fetch from all three sources concurrently; individual failures are non-fatal.
+  const [aicArtworks, metArtworks, europeanaArtworks] = await Promise.allSettled([
+    fetchArtInstituteArtworks({ query: cacheKey, limit: 100 }),
+    fetchMetMuseumArtworks({ query: cacheKey, limit: 50 }),
+    fetchEuropeanaArtworks({ query: cacheKey, limit: 50 }),
+  ]);
+
+  const allArtworks = [
+    ...(aicArtworks.status === 'fulfilled' ? aicArtworks.value : []),
+    ...(metArtworks.status === 'fulfilled' ? metArtworks.value : []),
+    ...(europeanaArtworks.status === 'fulfilled' ? europeanaArtworks.value : []),
+  ];
+
+  if (metArtworks.status === 'rejected') console.warn('[Catalog] Met Museum refresh failed:', metArtworks.reason?.message);
+  if (europeanaArtworks.status === 'rejected') console.warn('[Catalog] Europeana refresh failed:', europeanaArtworks.reason?.message);
+
+  await Promise.all(allArtworks.map(async (artwork) => {
     await Painting.findOneAndUpdate(
       { catalogId: artwork.catalogId },
       { $set: { ...artwork, lastSyncedAt: new Date() }, $setOnInsert: { popularity: 0, viewsCount: 0 } },
@@ -86,7 +109,7 @@ router.get('/proxy-image', async (req, res) => {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'image/webp,image/avif,image/jpeg,image/*,*/*',
-        // Must match the image host — artic.edu requires this, otherwise 403
+        // Must match the image host â€” artic.edu requires this, otherwise 403
         'Referer': `${imageUrl.protocol}//${imageUrl.hostname}/`
       }
     });
@@ -397,3 +420,4 @@ router.get('/:id/export/docx', async (req, res) => {
 });
 
 export default router;
+

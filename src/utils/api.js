@@ -25,6 +25,10 @@ const PROXIED_IMAGE_HOSTS = new Set([
   'images.unsplash.com',
   'upload.wikimedia.org',
   'lh3.googleusercontent.com',
+  // Europeana image hosts
+  'iiif.europeana.eu',
+  'europeana-images.s3.amazonaws.com',
+  'api.europeana.eu',
 ]);
 
 /**

@@ -36,15 +36,23 @@ export default function PaintingCard({ painting }) {
 
   const handleImageError = (event) => {
     const image = event.currentTarget;
-    // Direct cross-origin requests are blocked under COEP (NotSameOrigin), so
-    // skip the raw-URL fallback and go straight to the LQIP thumbnail.
-    // AIC includes a compact LQIP thumbnail in its artwork payload; it still
-    // represents the artwork when the full proxied image is unavailable.
-    if (!image.dataset.triedThumbnail && thumbnailUrl) {
+
+    // Step 1: If we haven't tried the raw (unproxied) URL yet, try it.
+    // Some IIIF hosts serve fine directly without the proxy.
+    if (!image.dataset.triedRaw && rawImageUrl && image.src !== rawImageUrl) {
+      image.dataset.triedRaw = 'true';
+      image.src = rawImageUrl;
+      return;
+    }
+
+    // Step 2: Try the thumbnail fallback (LQIP or smaller IIIF).
+    if (!image.dataset.triedThumbnail && thumbnailUrl && image.src !== thumbnailUrl) {
       image.dataset.triedThumbnail = 'true';
       image.src = thumbnailUrl;
       return;
     }
+
+    // Step 3: Use SVG placeholder.
     image.onerror = null;
     image.src = '/artwork-fallback.svg';
   };

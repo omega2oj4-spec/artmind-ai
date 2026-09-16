@@ -5,12 +5,29 @@ import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
 import { fetchArtInstituteArtworks, hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
+import { fetchMetMuseumArtworks } from '../utils/metMuseumCatalog.js';
+import { fetchEuropeanaArtworks } from '../utils/europeanaCatalog.js';
 
 const router = express.Router();
 
 async function addSourceSearchResults(query) {
-  const artworks = await fetchArtInstituteArtworks({ query, limit: 100 });
-  await Promise.all(artworks.map((artwork) => Painting.findOneAndUpdate(
+  // Fetch from all three sources concurrently; individual failures are non-fatal.
+  const [aicResult, metResult, europeanaResult] = await Promise.allSettled([
+    fetchArtInstituteArtworks({ query, limit: 100 }),
+    fetchMetMuseumArtworks({ query, limit: 50 }),
+    fetchEuropeanaArtworks({ query, limit: 50 }),
+  ]);
+
+  if (metResult.status === 'rejected') console.warn('[Search] Met Museum fetch failed:', metResult.reason?.message);
+  if (europeanaResult.status === 'rejected') console.warn('[Search] Europeana fetch failed:', europeanaResult.reason?.message);
+
+  const allArtworks = [
+    ...(aicResult.status === 'fulfilled' ? aicResult.value : []),
+    ...(metResult.status === 'fulfilled' ? metResult.value : []),
+    ...(europeanaResult.status === 'fulfilled' ? europeanaResult.value : []),
+  ];
+
+  await Promise.all(allArtworks.map((artwork) => Painting.findOneAndUpdate(
     { catalogId: artwork.catalogId },
     { $set: { ...artwork, lastSyncedAt: new Date() }, $setOnInsert: { popularity: 0, viewsCount: 0 } },
     { upsert: true, runValidators: true }

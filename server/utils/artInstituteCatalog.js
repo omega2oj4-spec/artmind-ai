@@ -56,8 +56,8 @@ export function normalizeArtInstituteArtwork(item) {
     dateEnd: item.date_end ?? null,
     medium,
     description,
-    imageUrl: `https://www.artic.edu/iiif/2/${item.image_id}/full/843,/0/default.jpg`,
-    thumbnailUrl: item.thumbnail?.lqip || '',
+    imageUrl: `https://www.artic.edu/iiif/2/${item.image_id}/full/1280,/0/default.jpg`,
+    thumbnailUrl: item.thumbnail?.lqip || `https://www.artic.edu/iiif/2/${item.image_id}/full/400,/0/default.jpg`,
     category,
     style,
     colorMedium: deriveColorMedium(medium),
@@ -121,7 +121,7 @@ export async function hydrateArtInstituteThumbnails(paintings = []) {
       // Artwork IDs are stable while image identifiers can change. Always use
       // the current identifier returned by the authoritative artwork endpoint.
       if (sourceArtwork.image_id) {
-        const freshUrl = `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/843,/0/default.jpg`;
+        const freshUrl = `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/1280,/0/default.jpg`;
         if (painting.imageUrl !== freshUrl) {
           painting.imageUrl = freshUrl;
           changed = true;
@@ -129,7 +129,7 @@ export async function hydrateArtInstituteThumbnails(paintings = []) {
       }
       if (!painting.thumbnailUrl) {
         const thumbnailUrl = sourceArtwork.thumbnail?.lqip
-          || (sourceArtwork.image_id ? `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/200,/0/default.jpg` : '');
+          || (sourceArtwork.image_id ? `https://www.artic.edu/iiif/2/${sourceArtwork.image_id}/full/400,/0/default.jpg` : '');
         if (thumbnailUrl) {
           painting.thumbnailUrl = thumbnailUrl;
           changed = true;
