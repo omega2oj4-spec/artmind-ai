@@ -94,3 +94,34 @@ export async function fetchArtInstituteArtworks({ query = 'painting', page = 1, 
     clearTimeout(timeout);
   }
 }
+
+/**
+ * Supplies compact source thumbnails for older catalog rows that were saved
+ * before thumbnail metadata was added. This is intentionally batched so a
+ * dashboard response remains one Art Institute request, not one per card.
+ */
+export async function hydrateArtInstituteThumbnails(paintings = []) {
+  const missing = paintings.filter((painting) => painting?.articId && !painting?.thumbnailUrl);
+  if (!missing.length) return paintings;
+
+  const ids = [...new Set(missing.map((painting) => painting.articId))].slice(0, 25);
+  const params = new URLSearchParams({ ids: ids.join(','), fields: 'id,thumbnail,image_id' });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(`https://api.artic.edu/api/v1/artworks?${params}`, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Art Institute thumbnail request returned ${response.status}`);
+    const body = await response.json();
+    const thumbnails = new Map((body.data || []).map((item) => [
+      Number(item.id),
+      item.thumbnail?.lqip || (item.image_id ? `https://www.artic.edu/iiif/2/${item.image_id}/full/200,/0/default.jpg` : '')
+    ]));
+    for (const painting of missing) {
+      const thumbnailUrl = thumbnails.get(Number(painting.articId));
+      if (thumbnailUrl) painting.thumbnailUrl = thumbnailUrl;
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+  return paintings;
+}

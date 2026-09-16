@@ -3,6 +3,7 @@ import Painting from '../models/Painting.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { getHomeGalleryArtworks } from '../../src/data/homeArtworks.js';
+import { hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.get('/trending', optionalAuth, async (req, res) => {
     const topPaintings = [...paintings]
       .sort((a, b) => (b.viewsCount || 0) + (b.popularity || 0) - (a.viewsCount || 0) - (a.popularity || 0))
       .slice(0, 8);
+    await hydrateArtInstituteThumbnails(topPaintings);
 
     const categories = new Map();
     paintings.forEach(painting => {

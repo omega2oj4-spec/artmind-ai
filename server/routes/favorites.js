@@ -6,6 +6,7 @@ import {
   canonicalFavoriteId,
   resolveFavoritePaintings
 } from '../utils/catalogSync.js';
+import { hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     const favorites = await resolveFavoritePaintings(user?.favorites);
+    await hydrateArtInstituteThumbnails(favorites);
     return res.json(favorites);
   } catch (err) {
     console.error('Error fetching favorites:', err);

@@ -5,7 +5,7 @@ import { generateCuratorSummary } from '../utils/openai.js';
 import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 import { findPaintingByAnyId, findSimilarPaintings } from '../utils/catalogSync.js';
-import { fetchArtInstituteArtworks } from '../utils/artInstituteCatalog.js';
+import { fetchArtInstituteArtworks, hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
 import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -218,6 +218,7 @@ router.get('/', async (req, res) => {
     }
 
     const paintings = await Painting.find(filter).sort({ popularity: -1, createdAt: -1 });
+    await hydrateArtInstituteThumbnails(paintings);
     return res.json(paintings);
   } catch (err) {
     console.error('Error fetching paintings:', err);
@@ -269,6 +270,7 @@ router.get('/:id', async (req, res) => {
     await painting.save();
 
     const similarPaintings = await findSimilarPaintings(painting, 6);
+    await hydrateArtInstituteThumbnails([painting, ...similarPaintings]);
 
     return res.json({
       painting,

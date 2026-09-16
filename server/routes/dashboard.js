@@ -2,6 +2,7 @@ import express from 'express';
 import { optionalAuth } from '../middleware/auth.js';
 import User from '../models/User.js';
 import Painting from '../models/Painting.js';
+import { hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
 import { resolveFavoritePaintings } from '../utils/catalogSync.js';
 
 const router = express.Router();
@@ -128,6 +129,14 @@ router.post('/views/:paintingId', optionalAuth, async (req, res) => {
 
         await user.save();
       }
+    }
+
+    // Older saved records predate source thumbnail metadata. Hydrate only the
+    // card groups being returned so their API images have a reliable fallback.
+    try {
+      await hydrateArtInstituteThumbnails([...recommended, ...aiCurated]);
+    } catch (thumbnailError) {
+      console.warn('[Dashboard] Could not hydrate artwork thumbnails:', thumbnailError.message);
     }
 
     return res.json({

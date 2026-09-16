@@ -4,7 +4,7 @@ import { parseNaturalLanguageSearch } from '../utils/openai.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
-import { fetchArtInstituteArtworks } from '../utils/artInstituteCatalog.js';
+import { fetchArtInstituteArtworks, hydrateArtInstituteThumbnails } from '../utils/artInstituteCatalog.js';
 
 const router = express.Router();
 
@@ -26,6 +26,7 @@ router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 30 }), optionalAu
     const { query } = req.body;
     if (!query || !query.trim()) {
       const allPaintings = await Painting.find().sort({ popularity: -1 }).limit(30);
+      await hydrateArtInstituteThumbnails(allPaintings);
       return res.json({ results: allPaintings, usingFallback: false, criteria: null });
     }
 
@@ -83,6 +84,7 @@ router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 30 }), optionalAu
       const results = await Painting.find(mongoQuery.$or.length > 0 ? mongoQuery : {}).sort({ popularity: -1 });
 
       if (results.length > 0) {
+        await hydrateArtInstituteThumbnails(results);
         return res.json({
           results,
           usingFallback: false,
@@ -112,6 +114,7 @@ router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 30 }), optionalAu
       : {};
 
     const fallbackResults = await Painting.find(fallbackFilter).sort({ popularity: -1 });
+    await hydrateArtInstituteThumbnails(fallbackResults);
 
     return res.json({
       results: fallbackResults,
