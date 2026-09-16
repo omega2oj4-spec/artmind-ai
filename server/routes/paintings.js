@@ -5,6 +5,7 @@ import { generateCuratorSummary } from '../utils/openai.js';
 import { buildPaintingPDF } from '../utils/pdfExport.js';
 import { buildPaintingDocx } from '../utils/docxExport.js';
 import { findPaintingByAnyId, findSimilarPaintings } from '../utils/catalogSync.js';
+import { fetchArtInstituteArtworks } from '../utils/artInstituteCatalog.js';
 import { optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -31,6 +32,26 @@ const IMAGE_EXTENSIONS = {
   'image/webp': 'webp',
   'image/gif': 'gif'
 };
+
+const catalogRefreshes = new Map();
+
+async function refreshCatalog(query) {
+  const cacheKey = String(query || 'painting').trim().toLowerCase();
+  const refreshedAt = catalogRefreshes.get(cacheKey) || 0;
+  // Cache remote search pages for ten minutes. MongoDB remains the durable,
+  // shared catalogue used by details, favorites, dashboards, and AI features.
+  if (Date.now() - refreshedAt < 10 * 60 * 1000) return;
+
+  const artworks = await fetchArtInstituteArtworks({ query: cacheKey, limit: 100 });
+  await Promise.all(artworks.map(async (artwork) => {
+    await Painting.findOneAndUpdate(
+      { catalogId: artwork.catalogId },
+      { $set: { ...artwork, lastSyncedAt: new Date() }, $setOnInsert: { popularity: 0, viewsCount: 0 } },
+      { upsert: true, new: true, runValidators: true }
+    );
+  }));
+  catalogRefreshes.set(cacheKey, Date.now());
+}
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -180,7 +201,20 @@ router.get('/', async (req, res) => {
         return res.status(400).json({ error: 'Search must be 100 characters or fewer' });
       }
       const regex = new RegExp(escapeRegExp(normalizedSearch), 'i');
-      filter.$or = [{ title: regex }, { artist: regex }, { description: regex }, { tags: regex }];
+      filter.$or = [
+        { title: regex }, { artist: regex }, { description: regex }, { tags: regex },
+        { style: regex }, { medium: regex }, { category: regex }, { classification: regex }
+      ];
+    }
+
+    // The Art Institute is the source of new works.  A source query is fetched
+    // on demand then normalized and upserted into the existing Painting model.
+    // If it is temporarily unavailable, the persisted catalogue still works.
+    const sourceQuery = search?.trim() || style?.trim() || selectedCategory || 'painting';
+    try {
+      await refreshCatalog(sourceQuery);
+    } catch (sourceError) {
+      console.warn('[Catalog] Art Institute refresh skipped:', sourceError.message);
     }
 
     const paintings = await Painting.find(filter).sort({ popularity: -1, createdAt: -1 });
@@ -188,6 +222,33 @@ router.get('/', async (req, res) => {
   } catch (err) {
     console.error('Error fetching paintings:', err);
     return res.status(500).json({ error: 'Server error fetching gallery paintings' });
+  }
+});
+
+/**
+ * GET /api/paintings/filters
+ * Filter values are derived from the synced art catalogue rather than a
+ * frontend-maintained list, so newly imported metadata appears automatically.
+ */
+router.get('/filters', async (req, res) => {
+  try {
+    try {
+      await refreshCatalog('painting');
+    } catch (sourceError) {
+      console.warn('[Catalog] Filter refresh skipped:', sourceError.message);
+    }
+    const [categories, styles, media, surfaces] = await Promise.all([
+      Painting.distinct('category'), Painting.distinct('style'),
+      Painting.distinct('colorMedium'), Painting.distinct('surface')
+    ]);
+    const cleanSort = (values) => values.filter(Boolean).sort((a, b) => a.localeCompare(b));
+    return res.json({
+      categories: cleanSort(categories), styles: cleanSort(styles),
+      colorMediums: cleanSort(media), surfaces: cleanSort(surfaces)
+    });
+  } catch (err) {
+    console.error('Error fetching painting filters:', err);
+    return res.status(500).json({ error: 'Server error fetching gallery filters' });
   }
 });
 

@@ -13,9 +13,12 @@ export function sanitizeCatalogPayload(artwork) {
     artist: artwork.artist || 'Unknown Artist',
     artistDetails: artwork.artistDetails || '',
     dateDisplay: artwork.dateDisplay || 'Undated',
+    dateStart: artwork.dateStart ?? null,
+    dateEnd: artwork.dateEnd ?? null,
     medium: artwork.medium || `${artwork.colorMedium || 'Mixed media'} on ${artwork.surface || 'Canvas'}`,
     description: artwork.description || '',
     imageUrl: artwork.imageUrl || artwork.src || '',
+    thumbnailUrl: artwork.thumbnailUrl || '',
     category,
     style: artwork.style || 'Modern Art',
     colorMedium: artwork.colorMedium || 'Oil',
@@ -24,7 +27,16 @@ export function sanitizeCatalogPayload(artwork) {
     colorTheme: artwork.colorTheme || 'Neutral',
     tags: Array.isArray(artwork.tags) ? artwork.tags : [],
     sourceName: artwork.sourceName || '',
-    sourceUrl: artwork.sourceUrl || ''
+    sourceUrl: artwork.sourceUrl || '',
+    articId: artwork.articId,
+    department: artwork.department || '',
+    artworkType: artwork.artworkType || '',
+    classification: artwork.classification || '',
+    placeOfOrigin: artwork.placeOfOrigin || '',
+    dimensions: artwork.dimensions || '',
+    creditLine: artwork.creditLine || '',
+    isPublicDomain: Boolean(artwork.isPublicDomain),
+    lastSyncedAt: new Date()
   };
 }
 
@@ -36,18 +48,8 @@ export async function upsertCatalogPainting(artwork) {
 
   const existing = await Painting.findOne({ catalogId: payload.catalogId });
   if (existing) {
-    let changed = false;
-    if (!existing.artistDetails && payload.artistDetails) {
-      existing.artistDetails = payload.artistDetails;
-      changed = true;
-    }
-    if (!existing.description && payload.description) {
-      existing.description = payload.description;
-      changed = true;
-    }
-    if (changed) {
-      await existing.save();
-    }
+    Object.assign(existing, payload);
+    await existing.save();
     return existing;
   }
 

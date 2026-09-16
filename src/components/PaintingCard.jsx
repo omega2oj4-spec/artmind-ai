@@ -25,8 +25,8 @@ export default function PaintingCard({ painting }) {
     }
   }, [isFav]);
 
-  // Art Institute image URLs are protected by Cloudflare and return 403 in
-  // production. Convert those records to a verified fallback before proxying.
+  // Sources that block browser hotlinking are routed through the API image
+  // proxy, while retaining the actual image supplied by the catalogue.
   const rawImageUrl = getArtworkImageUrl(painting);
   const imageUrl = proxyImageUrl(rawImageUrl);
 

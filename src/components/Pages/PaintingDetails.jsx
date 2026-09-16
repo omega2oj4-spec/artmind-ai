@@ -346,6 +346,24 @@ export default function PaintingDetails() {
               <span className="meta-label">Medium</span>
               <span className="meta-value">{painting.medium || `${painting.colorMedium || 'Mixed media'} on ${painting.surface || 'Canvas'}`}</span>
             </div>
+            {painting.dimensions && (
+              <div className="meta-card">
+                <span className="meta-label">Dimensions</span>
+                <span className="meta-value">{painting.dimensions}</span>
+              </div>
+            )}
+            {painting.placeOfOrigin && (
+              <div className="meta-card">
+                <span className="meta-label">Place of Origin</span>
+                <span className="meta-value">{painting.placeOfOrigin}</span>
+              </div>
+            )}
+            {painting.department && (
+              <div className="meta-card">
+                <span className="meta-label">Collection</span>
+                <span className="meta-value">{painting.department}</span>
+              </div>
+            )}
             <div className="meta-card">
               <span className="meta-label">Popularity</span>
               <span className="meta-value">

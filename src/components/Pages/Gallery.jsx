@@ -16,9 +16,6 @@ import {
   FaCompass
 } from 'react-icons/fa';
 
-import {
-  getHomeGalleryArtworks
-} from '../../data/homeArtworks.js';
 import API_BASE from '../../utils/api.js';
 import './Gallery.css';
 
@@ -32,44 +29,6 @@ const CATEGORIES = [
   'Religious'
 ];
 
-// Titles that exist in homeArtworks but also appear in MongoDB — block them from
-// the API results so they never render twice in the gallery.
-const BLOCKED_API_TITLES = new Set([
-  'two sisters (on the terrace)',
-  'sunflowers',
-  'the persistence of memory',
-  'the scream',
-  'wanderer above the sea of fog',
-  'the starry night',
-  'girl with a pearl earring',
-  'misty mountains',
-  'irises',
-  'water lily pond'
-]);
-
-function matchesGalleryFilters(painting, filters) {
-  const query = String(filters.search || '').trim().toLowerCase();
-  const haystack = [
-    painting.title,
-    painting.artist,
-    painting.description,
-    painting.category,
-    painting.style,
-    painting.colorMedium,
-    painting.surface,
-    ...(painting.tags || [])
-  ].join(' ').toLowerCase();
-
-  return (
-    (filters.category === 'All' || painting.category === filters.category) &&
-    (filters.surface === 'All Surfaces' || painting.surface === filters.surface) &&
-    (filters.colorMedium === 'All Color Media' || painting.colorMedium === filters.colorMedium) &&
-    (filters.style === 'All Styles' || painting.style === filters.style) &&
-    (filters.minPopularity === 'Any Popularity' || Number(painting.popularity || 0) >= Number(filters.minPopularity)) &&
-    (!query || haystack.includes(query))
-  );
-}
-
 export default function Gallery() {
   const [searchParams, setSearchParams] =
     useSearchParams();
@@ -77,6 +36,10 @@ export default function Gallery() {
 
   const [paintings, setPaintings] =
     useState([]);
+
+  const [filterOptions, setFilterOptions] = useState({
+    categories: CATEGORIES.slice(1), styles: [], surfaces: [], colorMediums: []
+  });
 
   const [loading, setLoading] =
     useState(true);
@@ -131,6 +94,18 @@ export default function Gallery() {
 
   const resultsRef = useRef(null);
   const galleryGridRef = useRef(null);
+
+  // Values come from the backend's synced source catalogue, not a hard-coded
+  // frontend list, so filters grow with the collection.
+  useEffect(() => {
+    fetch(`${API_BASE}/api/paintings/filters`)
+      .then((res) => res.ok ? res.json() : Promise.reject(new Error('Filter request failed')))
+      .then((data) => setFilterOptions({
+        categories: data.categories?.length ? data.categories : CATEGORIES.slice(1),
+        styles: data.styles || [], surfaces: data.surfaces || [], colorMediums: data.colorMediums || []
+      }))
+      .catch((err) => console.error('Error loading gallery filters:', err));
+  }, []);
 
   // Detail pages explicitly request a clean gallery return.  Reset the document
   // scroll position after this route mounts and ensure no stale inline overflow
@@ -454,79 +429,7 @@ export default function Gallery() {
       const data =
         await res.json();
 
-      const galleryFilters = {
-        category:
-          selectedPaintingType !== 'All Types'
-            ? selectedPaintingType
-            : activeCategory,
-        surface: selectedSurface,
-        colorMedium:
-          selectedColorMedium === 'All Mediums'
-            ? 'All Color Media'
-            : selectedColorMedium,
-        style: selectedStyle,
-        minPopularity: selectedPopularity,
-        search: searchQuery
-      };
-
-      const homePaintings = getHomeGalleryArtworks(
-        galleryFilters
-      );
-      const homeIds = new Set(
-        homePaintings.flatMap((item) =>
-          [item._id, item.id, item.catalogId].filter(Boolean).map(String)
-        )
-      );
-      const homeTitles = new Set(
-        homePaintings.map(
-          (item) => `${item.title}|${item.artist}`.toLowerCase()
-        )
-      );
-      const homeImageUrls = new Set(
-        homePaintings.map((item) => {
-          const url = String(item.src || item.imageUrl || '');
-          // Normalize URL by removing query parameters and common variations
-          return url.split('?')[0].replace(/\/$/, '');
-        })
-      );
-
-      const rawPaintings =
-        Array.isArray(data) && data.length > 0
-          ? [
-              ...homePaintings,
-              ...data.filter((painting) => {
-                const paintingUrl = String(painting.src || painting.imageUrl || '');
-                const normalizedUrl = paintingUrl.split('?')[0].replace(/\/$/, '');
-                const apiId = String(painting.catalogId || painting._id || '');
-                const titleKey = String(painting.title || '').toLowerCase().trim();
-                return (
-                  !BLOCKED_API_TITLES.has(titleKey) &&
-                  !homeIds.has(apiId) &&
-                  !homeTitles.has(
-                    `${painting.title}|${painting.artist}`.toLowerCase()
-                  ) &&
-                  !homeImageUrls.has(normalizedUrl)
-                );
-              })
-            ]
-          : homePaintings;
-
-      // Final dedup pass — eliminate any remaining duplicates by id then image url
-      const seenIds = new Set();
-      const seenUrls = new Set();
-      const galleryPaintings = rawPaintings.filter((painting) => {
-        const uid = String(painting._id || painting.id || painting.catalogId || '');
-        const imgUrl = String(painting.src || painting.imageUrl || '').split('?')[0].replace(/\/$/, '');
-        if (uid && seenIds.has(uid)) return false;
-        if (imgUrl && seenUrls.has(imgUrl)) return false;
-        if (uid) seenIds.add(uid);
-        if (imgUrl) seenUrls.add(imgUrl);
-        return matchesGalleryFilters(painting, galleryFilters);
-      });
-
-      setPaintings(
-        galleryPaintings
-      );
+      setPaintings(Array.isArray(data) ? data : []);
 
     } catch (err) {
       console.error(
@@ -534,33 +437,7 @@ export default function Gallery() {
         err
       );
 
-      setPaintings(
-        getHomeGalleryArtworks({
-          category:
-            selectedPaintingType !==
-            'All Types'
-              ? selectedPaintingType
-              : activeCategory,
-
-          surface:
-            selectedSurface,
-
-          colorMedium:
-            selectedColorMedium ===
-            'All Mediums'
-              ? 'All Color Media'
-              : selectedColorMedium,
-
-          style:
-            selectedStyle,
-
-          minPopularity:
-            selectedPopularity,
-
-          search:
-            searchQuery
-        })
-      );
+      setPaintings([]);
 
     } finally {
       setLoading(false);
@@ -792,7 +669,7 @@ export default function Gallery() {
 
           <div className="gallery-categories">
 
-            {CATEGORIES.map(
+            {['All', ...filterOptions.categories].map(
               (cat) => (
                 <button
                   key={cat}
@@ -885,9 +762,7 @@ export default function Gallery() {
                     All Types
                   </option>
 
-                  {CATEGORIES.slice(
-                    1
-                  ).map(
+                  {filterOptions.categories.map(
                     (type) => (
                       <option
                         key={type}
@@ -930,21 +805,7 @@ export default function Gallery() {
                     All Surfaces
                   </option>
 
-                  <option>
-                    Canvas
-                  </option>
-
-                  <option>
-                    Paper
-                  </option>
-
-                  <option>
-                    Wood Panel
-                  </option>
-
-                  <option>
-                    Board
-                  </option>
+                  {filterOptions.surfaces.map((surface) => <option key={surface}>{surface}</option>)}
 
                 </select>
 
@@ -979,33 +840,7 @@ export default function Gallery() {
                     All Mediums
                   </option>
 
-                  <option>
-                    Oil
-                  </option>
-
-                  <option>
-                    Watercolor
-                  </option>
-
-                  <option>
-                    Pastel
-                  </option>
-
-                  <option>
-                    Acrylic
-                  </option>
-
-                  <option>
-                    Ink
-                  </option>
-
-                  <option>
-                    Tempera
-                  </option>
-
-                  <option>
-                    Mixed Media
-                  </option>
+                  {filterOptions.colorMediums.map((medium) => <option key={medium}>{medium}</option>)}
 
                 </select>
 
@@ -1040,49 +875,7 @@ export default function Gallery() {
                     All Styles
                   </option>
 
-                  <option>
-                    Impressionism
-                  </option>
-
-                  <option>
-                    Post-Impressionism
-                  </option>
-
-                  <option>
-                    Surrealism
-                  </option>
-
-                  <option>
-                    Expressionism
-                  </option>
-
-                  <option>
-                    Romanticism
-                  </option>
-
-                  <option>
-                    Baroque
-                  </option>
-
-                  <option>
-                    Renaissance
-                  </option>
-
-                  <option>
-                    Realism
-                  </option>
-
-                  <option>
-                    Modern Art
-                  </option>
-
-                  <option>
-                    Contemporary Figurative
-                  </option>
-
-                  <option>
-                    Sacred Art
-                  </option>
+                  {filterOptions.styles.map((style) => <option key={style}>{style}</option>)}
 
                 </select>
 

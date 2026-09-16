@@ -4,8 +4,18 @@ import { parseNaturalLanguageSearch } from '../utils/openai.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
 import { createRateLimiter } from '../middleware/rateLimit.js';
+import { fetchArtInstituteArtworks } from '../utils/artInstituteCatalog.js';
 
 const router = express.Router();
+
+async function addSourceSearchResults(query) {
+  const artworks = await fetchArtInstituteArtworks({ query, limit: 100 });
+  await Promise.all(artworks.map((artwork) => Painting.findOneAndUpdate(
+    { catalogId: artwork.catalogId },
+    { $set: { ...artwork, lastSyncedAt: new Date() }, $setOnInsert: { popularity: 0, viewsCount: 0 } },
+    { upsert: true, runValidators: true }
+  )));
+}
 
 /**
  * POST /api/search
@@ -20,6 +30,14 @@ router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 30 }), optionalAu
     }
 
     const trimmedQuery = query.trim().slice(0, 200);
+
+    // Keep search current with the source catalogue. Failure is non-fatal:
+    // results can still be served from previously synced MongoDB records.
+    try {
+      await addSourceSearchResults(trimmedQuery);
+    } catch (sourceError) {
+      console.warn('[Search] Art Institute refresh skipped:', sourceError.message);
+    }
 
     // Searches are part of a member's art journey, so keep a compact history
     // for personalized recommendations and usage analytics.
