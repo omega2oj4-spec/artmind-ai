@@ -260,11 +260,7 @@ export default function Home() {
         </form>
 
         <div className="hero-portal-preview">
-          <img
-            src="/artmind-ai-portal.png"
-            alt="ArtMind AI Portal preview"
-            loading="eager"
-          />
+         
         </div>
       </div>
 
