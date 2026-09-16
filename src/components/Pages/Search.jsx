@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FaSearch, FaMagic, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
 import API_BASE from '../../utils/api.js';
@@ -6,11 +7,13 @@ import { getHomeGalleryArtworks } from '../../data/homeArtworks.js';
 import './Search.css';
 
 export default function Search({ embedded = false }) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const lastUrlSearchRef = useRef('');
 
   const sampleQueries = [
     "Oil paintings with peaceful nature themes",
@@ -20,9 +23,15 @@ export default function Search({ embedded = false }) {
     "Watercolor floral studies in yellow tones"
   ];
 
-  const executeSearch = async (searchQuery) => {
+  const executeSearch = async (searchQuery, updateUrl = true) => {
     const q = searchQuery || query;
     if (!q.trim()) return;
+
+    const trimmedQuery = q.trim();
+    if (!embedded && updateUrl) {
+      lastUrlSearchRef.current = trimmedQuery;
+      setSearchParams({ q: trimmedQuery });
+    }
 
     setLoading(true);
     setHasSearched(true);
@@ -35,14 +44,14 @@ export default function Search({ embedded = false }) {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ query: q })
+        body: JSON.stringify({ query: trimmedQuery })
       });
 
       if (!res.ok) throw new Error('Search failed');
 
       const data = await res.json();
       const apiResults = data.results || [];
-      const homeResults = getHomeGalleryArtworks({ search: q });
+      const homeResults = getHomeGalleryArtworks({ search: trimmedQuery });
       const seen = new Set(
         apiResults.map((painting) => `${painting.title}|${painting.artist}`.toLowerCase())
       );
@@ -59,11 +68,24 @@ export default function Search({ embedded = false }) {
       window.dispatchEvent(new Event('artmind:activity-updated'));
     } catch (err) {
       console.error('Search error:', err);
-      setResults(getHomeGalleryArtworks({ search: q }));
+      setResults(getHomeGalleryArtworks({ search: trimmedQuery }));
     } finally {
       setLoading(false);
     }
   };
+
+  // A search URL is a durable source state: returning from Painting Details,
+  // refreshing, or sharing the URL restores the user's previous query.
+  useEffect(() => {
+    if (embedded) return;
+
+    const urlQuery = searchParams.get('q')?.trim() || '';
+    if (!urlQuery || urlQuery === lastUrlSearchRef.current) return;
+
+    lastUrlSearchRef.current = urlQuery;
+    setQuery(urlQuery);
+    executeSearch(urlQuery, false);
+  }, [embedded, searchParams]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

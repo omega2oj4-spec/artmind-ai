@@ -7,10 +7,11 @@ import { getArtworkImageUrl } from '../utils/artworkImages.js';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
-  if (!painting) return null;
-
   const location = useLocation();
   const { favorites, toggleFavorite } = useContext(AuthContext);
+
+  if (!painting) return null;
+
   const paintingId = painting._id || painting.id || painting.catalogId;
   const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
   const isFav = favorites?.some((favId) => candidateIds.includes(String(favId)));
@@ -28,6 +29,14 @@ export default function PaintingCard({ painting }) {
   // production. Convert those records to a verified fallback before proxying.
   const rawImageUrl = getArtworkImageUrl(painting);
   const imageUrl = proxyImageUrl(rawImageUrl);
+
+  // Preserve the complete route (including gallery filters and search query)
+  // so Painting Details can return through the browser history to this view.
+  const sourceLocation = {
+    pathname: location.pathname,
+    search: location.search,
+    hash: location.hash
+  };
 
 
   const downloadName = `${(painting.title || 'artwork').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artwork'}.jpg`;
@@ -72,7 +81,7 @@ export default function PaintingCard({ painting }) {
     <article className="painting-card" id={`painting-${paintingId}`} tabIndex="-1">
       <Link
         to={`/painting/${paintingId}`}
-        state={{ returnTo: location.pathname === '/dashboard' ? '/dashboard#gallery' : '/gallery' }}
+        state={{ from: sourceLocation }}
         className="painting-card-link"
         style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}
       >

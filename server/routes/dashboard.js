@@ -192,15 +192,6 @@ router.get('/', optionalAuth, async (req, res) => {
     /**
      * For new users, show some popular artworks instead.
      */
-    if (recentlyViewed.length === 0) {
-      recentlyViewed = await Painting.find()
-        .sort({
-          popularity: -1,
-          viewsCount: -1
-        })
-        .limit(10);
-    }
-
     /**
      * ---------------------------------------------------------
      * 2. ACTIVITY
@@ -307,6 +298,7 @@ router.get('/', optionalAuth, async (req, res) => {
      */
 
     const categoryScores = {};
+    const artistScores = {};
     const styleScores = {};
     const mediumScores = {};
     const colorScores = {};
@@ -340,6 +332,8 @@ router.get('/', optionalAuth, async (req, res) => {
         painting.category,
         10
       );
+
+      addScore(artistScores, painting.artist, 12);
 
       addScore(
         styleScores,
@@ -386,6 +380,8 @@ router.get('/', optionalAuth, async (req, res) => {
         painting.category,
         viewScore
       );
+
+      addScore(artistScores, painting.artist, 6 * recency);
 
       addScore(
         styleScores,
@@ -565,6 +561,12 @@ router.get('/', optionalAuth, async (req, res) => {
           ] || 0;
 
         score += categoryScore * 1.5;
+
+        // Artist affinity is built from favourites and repeated, recent views.
+        // It lets a Van Gogh enthusiast receive more Van Gogh works while the
+        // other metadata keeps the collection varied and relevant.
+        const artistScore = artistScores[painting.artist] || 0;
+        score += artistScore * 1.4;
 
         /**
          * STYLE

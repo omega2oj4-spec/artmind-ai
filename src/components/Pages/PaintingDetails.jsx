@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaHeart,
   FaRegHeart,
@@ -44,6 +44,8 @@ function mergeSimilarPaintings(groups, currentIds, limit = 6) {
 
 export default function PaintingDetails() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { favorites, toggleFavorite } = useContext(AuthContext);
 
   const [painting, setPainting] = useState(null);
@@ -58,6 +60,22 @@ export default function PaintingDetails() {
   const isFav = favorites?.some((favoriteId) =>
     currentIds.some((key) => String(favoriteId) === String(key))
   );
+
+  const fallbackDestination = location.state?.from
+    ? `${location.state.from.pathname || '/gallery'}${location.state.from.search || ''}${location.state.from.hash || ''}`
+    : '/gallery';
+
+  const handleBack = () => {
+    // Cards provide `from` in location state. Going back one history entry
+    // restores the exact source route, including its gallery/search URL state.
+    // The fallback also supports a directly opened or refreshed detail page.
+    if (location.state?.from) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(fallbackDestination, { replace: true });
+  };
 
   useEffect(() => {
     // Only sync if we're not in the middle of a toggle operation
@@ -220,7 +238,7 @@ export default function PaintingDetails() {
       <div className="details-error-container">
         <h2>Artwork Not Found</h2>
         <p>The requested artwork record could not be found in our catalog.</p>
-        <Link to="/gallery" className="back-link">
+        <Link to={fallbackDestination} className="back-link">
           <FaArrowLeft />
           Return to Gallery
         </Link>
@@ -231,10 +249,10 @@ export default function PaintingDetails() {
   return (
     <main className="painting-details-container">
       <div className="details-navigation">
-        <Link to="/dashboard#gallery" className="back-link">
+        <button type="button" className="back-link details-back-button" onClick={handleBack}>
           <FaArrowLeft />
-          Back to Gallery
-        </Link>
+          Back
+        </button>
       </div>
 
       <div className="painting-details-grid">

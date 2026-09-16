@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { homeArtworks, getHomeArtworkById } from '../../data/homeArtworks.js';
 import { proxyImageUrl } from '../../utils/api.js';
 import './Home.css';
@@ -36,9 +36,15 @@ const TypewriterText = ({ text, delay = 0 }) => {
 
 const CarouselItem = ({ art }) => {
   const artwork = getHomeArtworkById(art.id) || art;
+  const location = useLocation();
 
   return (
-    <Link className="carousel-item" to={`/painting/${artwork.id}`} aria-label={`View ${artwork.title} details`}>
+    <Link
+      className="carousel-item"
+      to={`/painting/${artwork.id}`}
+      state={{ from: { pathname: location.pathname, search: location.search, hash: location.hash } }}
+      aria-label={`View ${artwork.title} details`}
+    >
       <img src={proxyImageUrl(artwork.src)} alt={artwork.title} loading="lazy" referrerPolicy="no-referrer" />
       <div className="artwork-info-always-visible">
         <h3 className="artwork-title">
