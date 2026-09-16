@@ -276,6 +276,24 @@
   font-style: italic;
 }
 
+.hero-portal-preview {
+  width: 100%;
+  margin: 56px auto 0;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid #e8e3dc;
+  border-radius: 22px;
+  background: #f8f6f2;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16);
+}
+
+.hero-portal-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+}
+
 @media (max-width: 1024px) {
   .hero-title {
     font-size: 2.8rem;

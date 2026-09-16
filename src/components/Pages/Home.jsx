@@ -258,6 +258,14 @@ export default function Home() {
             Search
           </button>
         </form>
+
+        <div className="hero-portal-preview">
+          <img
+            src="/artmind-ai-portal.png"
+            alt="ArtMind AI Portal preview"
+            loading="eager"
+          />
+        </div>
       </div>
 
       <div className="carousel-wrapper manual-carousel" ref={carouselWrapperRef}>
