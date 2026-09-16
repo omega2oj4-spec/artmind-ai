@@ -3,6 +3,7 @@ import Painting from '../models/Painting.js';
 import { parseNaturalLanguageSearch } from '../utils/openai.js';
 import User from '../models/User.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { createRateLimiter } from '../middleware/rateLimit.js';
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ const router = express.Router();
  * POST /api/search
  * Intelligent NLP search with automatic keyword fallback
  */
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 30 }), optionalAuth, async (req, res) => {
   try {
     const { query } = req.body;
     if (!query || !query.trim()) {
@@ -18,7 +19,7 @@ router.post('/', optionalAuth, async (req, res) => {
       return res.json({ results: allPaintings, usingFallback: false, criteria: null });
     }
 
-    const trimmedQuery = query.trim();
+    const trimmedQuery = query.trim().slice(0, 200);
 
     // Searches are part of a member's art journey, so keep a compact history
     // for personalized recommendations and usage analytics.

@@ -157,7 +157,7 @@ router.get('/', optionalAuth, async (req, res) => {
         .populate('viewHistory.painting');
     }
 
-    const allPaintings = await Painting.find();
+    const allPaintings = await Painting.find().select('title artist category style medium colorMedium colorTheme surface tags description popularity viewsCount imageUrl catalogId').lean();
     const favoritePaintings = user
       ? await resolveFavoritePaintings(user.favorites)
       : [];

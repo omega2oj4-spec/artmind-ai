@@ -318,31 +318,16 @@ export default function Gallery() {
     }
 
     try {
-      const token =
-        localStorage.getItem(
-          'artmind_token'
-        ) ||
-        localStorage.getItem(
-          'token'
-        ) ||
-        localStorage.getItem(
-          'authToken'
-        );
-
       const headers = {
         'Content-Type':
           'application/json'
       };
 
-      if (token) {
-        headers.Authorization =
-          `Bearer ${token}`;
-      }
-
       const res = await fetch(
         `${API_BASE}/api/dashboard/search-history`,
         {
           method: 'POST',
+          credentials: 'include',
           headers,
           body: JSON.stringify({
             query: cleanQuery

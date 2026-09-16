@@ -46,9 +46,7 @@ export default function AIVision() {
     try {
       const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('artmind_token')}`
-        },
+        credentials: 'include',
         body: formData
       });
 

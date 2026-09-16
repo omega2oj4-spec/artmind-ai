@@ -56,11 +56,8 @@ export default function Analytics({ embedded = false }) {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('artmind_token');
-      const headers = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
       setError('');
-      const res = await fetch(`${API_BASE}/api/analytics/trending`, { headers });
+      const res = await fetch(`${API_BASE}/api/analytics/trending`, { credentials: 'include' });
       if (!res.ok) throw new Error('Analytics load failed');
       const data = await res.json();
       setAnalytics(data);

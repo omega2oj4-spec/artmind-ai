@@ -117,14 +117,12 @@ export default function ChatBot() {
           text: m.text
         }));
 
-      const token = localStorage.getItem('artmind_token');
-
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'text/event-stream',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          Accept: 'text/event-stream'
         },
         body: JSON.stringify({
           message: userMsg,
@@ -255,12 +253,9 @@ export default function ChatBot() {
     formData.append('image', file);
 
     try {
-      const token = localStorage.getItem('artmind_token');
       const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
+        credentials: 'include',
         body: formData
       });
 

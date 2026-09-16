@@ -8,6 +8,7 @@ const openai = process.env.OPENAI_API_KEY
   : null;
 
 const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
+const VISION_MODEL = process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini';
 
 const PORTAL_DESTINATIONS = [
   { path: '/gallery', label: 'Open Gallery', terms: ['gallery', 'browse collection'] },
@@ -339,7 +340,7 @@ export async function analyzeImageWithVision(imageBuffer, mimeType = 'image/jpeg
 }`;
 
     const response = await openai.chat.completions.create({
-      model: 'gemini-3.6-flash',
+      model: VISION_MODEL,
       response_format: { type: 'json_object' },
       messages: [
         {
@@ -387,7 +388,7 @@ Return ONLY a valid JSON object matching this exact schema:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: 'gemini-3.6-flash',
+      model: CHAT_MODEL,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'user', content: prompt }

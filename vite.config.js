@@ -39,6 +39,6 @@ export default defineConfig({
       }
     },
     // Enable source maps for production debugging
-    sourcemap: true
+    sourcemap: false
   }
 })

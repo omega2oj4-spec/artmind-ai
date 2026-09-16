@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './AuthPages.css';
-import API_BASE from '../../utils/api.js';
+import { apiFetch } from '../../utils/api.js';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -22,8 +22,8 @@ export default function Register() {
       setError('Please complete all required fields.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (password.length < 10) {
+      setError('Password must be at least 10 characters long.');
       return;
     }
     if (password !== confirmPassword) {
@@ -35,7 +35,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/register`, {
+      const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), password })

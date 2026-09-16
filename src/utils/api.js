@@ -38,4 +38,8 @@ export function proxyImageUrl(src) {
   return src;
 }
 
+export function apiFetch(path, options = {}) {
+  return fetch(`${API_BASE}${path}`, { credentials: 'include', ...options });
+}
+
 export default API_BASE;

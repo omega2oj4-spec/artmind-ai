@@ -1,11 +1,19 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
-export async function protect(req, res, next) {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
+function getToken(req) {
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return req.headers.authorization.slice(7);
   }
+  return req.headers.cookie
+    ?.split(';')
+    .map(value => value.trim())
+    .find(value => value.startsWith('artmind_token='))
+    ?.slice('artmind_token='.length);
+}
+
+export async function protect(req, res, next) {
+  const token = getToken(req);
 
   if (!token) {
     return res.status(401).json({ error: 'Not authorized, no token provided' });
@@ -25,10 +33,7 @@ export async function protect(req, res, next) {
 }
 
 export function optionalAuth(req, res, next) {
-  let token;
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
+  const token = getToken(req);
 
   if (!token) {
     req.user = null;

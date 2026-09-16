@@ -6,6 +6,7 @@ import {
   streamChatReply
 } from '../utils/openai.js';
 import { optionalAuth } from '../middleware/auth.js';
+import { createRateLimiter } from '../middleware/rateLimit.js';
 import { getHomeGalleryArtworks } from '../../src/data/homeArtworks.js';
 
 const router = express.Router();
@@ -102,11 +103,11 @@ function writeSse(res, payload) {
  * POST /api/chat
  * Streams a fast art-assistant reply. Matching catalog cards are sent first.
  */
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', createRateLimiter({ windowMs: 60 * 1000, max: 20 }), optionalAuth, async (req, res) => {
   try {
     const { message, history } = req.body;
 
-    if (!message || !message.trim()) {
+    if (!message || !message.trim() || message.length > 2000) {
       return res.status(400).json({
         error: 'Message content is required'
       });

@@ -38,7 +38,6 @@ function uniqueArtworkCards(paintings, limit = 6) {
 export default function Dashboard() {
   const {
     user,
-    token,
     favorites,
     loading: authLoading
   } = useContext(AuthContext);
@@ -92,15 +91,7 @@ export default function Dashboard() {
     if (showLoading) setLoading(true);
 
     try {
-      const headers = {};
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const res = await fetch(`${API_BASE}/api/dashboard`, {
-        headers
-      });
+      const res = await fetch(`${API_BASE}/api/dashboard`, { credentials: 'include' });
 
       if (!res.ok) {
         throw new Error('Dashboard load failed');

@@ -146,15 +146,9 @@ export default function PaintingDetails() {
 
   const recordView = async () => {
     try {
-      const token = localStorage.getItem('artmind_token');
-      const headers = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
       const res = await fetch(`${API_BASE}/api/paintings/${id}/view`, {
         method: 'POST',
-        headers
+        credentials: 'include'
       });
 
       if (res.ok) {

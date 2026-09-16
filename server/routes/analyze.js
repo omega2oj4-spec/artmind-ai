@@ -7,6 +7,7 @@ import { findPaintingByAnyId } from '../utils/catalogSync.js';
 
 const router = express.Router();
 const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const ALLOWED_CATALOG_IMAGE_HOSTS = new Set(['images.unsplash.com', 'cdn.dribbble.com', 'mdl.artvee.com', 'api.nga.gov', 'artallin.com', 'i.pinimg.com', 'www.artic.edu', 'lh3.googleusercontent.com', 'upload.wikimedia.org', 'images.metmuseum.org']);
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const MAX_ANALYSES_PER_WINDOW = 10;
 const analysisAttempts = new Map();
@@ -242,7 +243,12 @@ router.post('/painting/:paintingId', protect, limitAnalysisRequests, async (req,
       `[Vision] Analyzing catalog painting: ${painting.title}`
     );
 
-    // Download the actual painting image (with headers to avoid museum CDN 403s)
+    const imageUrl = new URL(painting.imageUrl);
+    if (imageUrl.protocol !== 'https:' || !ALLOWED_CATALOG_IMAGE_HOSTS.has(imageUrl.hostname)) {
+      return res.status(400).json({ error: 'This catalog image source cannot be analyzed.' });
+    }
+
+    // Download only an approved catalog image source.
     const imageResponse = await fetch(painting.imageUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

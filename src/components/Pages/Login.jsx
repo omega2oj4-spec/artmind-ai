@@ -2,7 +2,7 @@ import { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
-import API_BASE from '../../utils/api.js';
+import { apiFetch } from '../../utils/api.js';
 import './AuthPages.css';
 
 export default function Login() {
@@ -27,7 +27,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password })
@@ -48,11 +48,11 @@ export default function Login() {
         throw new Error(data.error || 'The sign-in service is unavailable. Please try again shortly.');
       }
 
-      if (!data.token || !data.user) {
+      if (!data.user) {
         throw new Error('The sign-in service returned an incomplete response. Please try again shortly.');
       }
 
-      login(data.token, data.user);
+      login(data.user);
       window.scrollTo(0, 0);
       const from = location.state?.from || '/dashboard';
       navigate(from, { replace: true });

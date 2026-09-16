@@ -37,12 +37,11 @@ export default function Search({ embedded = false }) {
     setHasSearched(true);
 
     try {
-      const token = localStorage.getItem('artmind_token');
       const res = await fetch(`${API_BASE}/api/search`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ query: trimmedQuery })
       });

@@ -3,8 +3,20 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { createRateLimiter } from '../middleware/rateLimit.js';
 
 const router = express.Router();
+const authLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
+
+function setSessionCookie(res, token) {
+  res.cookie('artmind_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: '/'
+  });
+}
 
 function generateToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -15,10 +27,10 @@ function generateToken(id) {
 /**
  * POST /api/auth/register
  */
-router.post('/register', async (req, res) => {
+router.post('/register', authLimit, async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    if (!name || !email || !password || password.length < 10 || !/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
 
@@ -38,8 +50,8 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user._id);
 
+    setSessionCookie(res, token);
     return res.status(201).json({
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -56,7 +68,7 @@ router.post('/register', async (req, res) => {
 /**
  * POST /api/auth/login
  */
-router.post('/login', async (req, res) => {
+router.post('/login', authLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -75,8 +87,8 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user._id);
 
+    setSessionCookie(res, token);
     return res.json({
-      token,
       user: {
         id: user._id,
         name: user.name,
@@ -88,6 +100,11 @@ router.post('/login', async (req, res) => {
     console.error('Error during login:', err);
     return res.status(500).json({ error: 'Login failed. Please try again.' });
   }
+});
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('artmind_token', { path: '/' });
+  return res.status(204).end();
 });
 
 /**
