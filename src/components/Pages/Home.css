@@ -34,11 +34,11 @@
 
 .search-container {
   width: 100%;
-  max-width: 1160px;
+  max-width: 960px;
   margin: 0 auto;
   position: relative;
   display: flex;
-  gap: 40px;
+  gap: clamp(14px, 2.5vw, 28px);
 }
 
 .search-input-wrapper {
@@ -49,13 +49,13 @@
 
 .nl-search-input {
   width: 100%;
-  padding: 24px 40px;
-  font-size: 2rem;
+  padding: clamp(15px, 1.8vw, 20px) clamp(22px, 3vw, 32px);
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
   font-family: sans-serif;
   color: #f4f0eb;
   background: #3d3d3d;
   border: 0;
-  border-radius: 52px;
+  border-radius: 42px;
   box-shadow: none;
   transition: all 0.3s ease;
   outline: none;
@@ -112,13 +112,13 @@
 }
 
 .nl-search-btn {
-  min-width: 210px;
+  min-width: clamp(130px, 18vw, 175px);
   background-color: #080909;
   color: #f4f0eb;
   border: none;
-  padding: 0 34px;
-  border-radius: 52px;
-  font-size: 2rem;
+  padding: 0 clamp(20px, 3vw, 28px);
+  border-radius: 42px;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;

@@ -34,14 +34,14 @@
 }
 
 .search-page-input-wrapper {
-  max-width: 1160px;
+  max-width: 960px;
   margin: 0 auto 32px;
   position: relative;
 }
 
 .search-page-form {
   display: flex;
-  gap: 40px;
+  gap: clamp(14px, 2.5vw, 28px);
 }
 
 .search-page-field {
@@ -49,22 +49,22 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 24px 40px;
-  gap: 18px;
+  padding: clamp(15px, 1.8vw, 20px) clamp(22px, 3vw, 32px);
+  gap: clamp(10px, 1.5vw, 16px);
   background: #3d3d3d;
-  border-radius: 52px;
+  border-radius: 42px;
 }
 
 .field-icon {
   color: #ffffff;
-  font-size: 1.6rem;
+  font-size: clamp(1.1rem, 2vw, 1.4rem);
 }
 
 .search-page-field input {
   width: 100%;
   border: none;
   outline: none;
-  font-size: 2rem;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
   color: #ffffff;
   background: transparent;
   font-family: inherit;
@@ -75,14 +75,14 @@
 }
 
 .search-page-btn {
-  min-width: 210px;
+  min-width: clamp(130px, 18vw, 175px);
   background: #080909;
   color: #ffffff;
   border: none;
-  padding: 0 34px;
-  border-radius: 52px;
+  padding: 0 clamp(20px, 3vw, 28px);
+  border-radius: 42px;
   font-weight: 600;
-  font-size: 2rem;
+  font-size: clamp(1rem, 1.8vw, 1.35rem);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
