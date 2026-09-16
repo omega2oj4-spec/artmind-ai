@@ -29,20 +29,15 @@ export default function PaintingCard({ painting }) {
   // proxy, while retaining the actual image supplied by the catalogue.
   const rawImageUrl = getArtworkImageUrl(painting);
   const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail || '';
-  // The source LQIP is an actual API image and is available immediately. Full
-  // IIIF images remain available as retries if a thumbnail cannot load.
+  // Full IIIF images are primary. The source LQIP remains a reliable last
+  // fallback for a record whose full image cannot be reached.
   const proxiedImageUrl = proxyImageUrl(rawImageUrl);
-  const imageUrl = thumbnailUrl || proxiedImageUrl;
+  const imageUrl = proxiedImageUrl;
 
   const handleImageError = (event) => {
     const image = event.currentTarget;
     // Render's proxy can occasionally time out on large IIIF files. Browser
     // image requests do not need CORS, so retry the source image directly.
-    if (!image.dataset.triedProxy && rawImageUrl && imageUrl !== proxiedImageUrl) {
-      image.dataset.triedProxy = 'true';
-      image.src = proxiedImageUrl;
-      return;
-    }
     if (!image.dataset.triedDirect && rawImageUrl && proxiedImageUrl !== rawImageUrl) {
       image.dataset.triedDirect = 'true';
       image.src = rawImageUrl;

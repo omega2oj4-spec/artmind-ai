@@ -105,14 +105,13 @@ router.get('/proxy-image', async (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=604800');
     res.setHeader('Content-Type', contentType);
 
-    // Stream directly — avoids buffering entire image in Node memory
-    imageResponse.body.pipeTo(
-      new WritableStream({
-        write(chunk) { res.write(chunk); },
-        close() { res.end(); },
-        abort(err) { res.destroy(err); }
-      })
-    );
+    // Buffer before sending. Some Node/Render combinations terminate the
+    // Web-Streams `pipeTo` response early, causing the browser to receive a
+    // broken image. Artwork is requested at a bounded display size, so this
+    // remains small while producing a normal, complete HTTP image response.
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    res.setHeader('Content-Length', imageBuffer.length);
+    return res.send(imageBuffer);
   } catch (err) {
     if (err.name === 'AbortError') {
       return res.status(504).json({ error: 'Image fetch timed out' });
