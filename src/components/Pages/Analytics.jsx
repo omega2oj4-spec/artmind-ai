@@ -219,32 +219,6 @@ export default function Analytics({ embedded = false }) {
                 : 'Showing insights from the gallery collection. Views update as visitors explore artworks.'}
             </p>
           )}
-          {/* High-level stats banner */}
-          <div className="analytics-stats-banner">
-            <div className="stat-box">
-              <FaEye className="stat-icon" />
-              <div className="stat-data">
-                <span className="stat-number">{analytics.totalViews || 0}</span>
-                <span className="stat-label">Total Artwork Views</span>
-              </div>
-            </div>
-
-            <div className="stat-box">
-              <FaLayerGroup className="stat-icon" />
-              <div className="stat-data">
-                <span className="stat-number">{analytics.totalArtworks || 0}</span>
-                <span className="stat-label">Catalog Masterworks</span>
-              </div>
-            </div>
-
-            <div className="stat-box">
-              <FaAward className="stat-icon" />
-              <div className="stat-data">
-                <span className="stat-number">{analytics.categoryStats?.length || 0}</span>
-                <span className="stat-label">Art Categories</span>
-              </div>
-            </div>
-          </div>
 
           {/* Category Engagement Table / Breakdown */}
           {analytics.categoryStats && analytics.categoryStats.length > 0 && (
