@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { FaDownload, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext.jsx';
 import API_BASE, { proxyImageUrl } from '../utils/api.js';
-import { getArtworkImageUrl } from '../utils/artworkImages.js';
+import { getArtworkImageUrl, getLocalFallbackImage } from '../utils/artworkImages.js';
 import './PaintingCard.css';
 
 export default function PaintingCard({ painting }) {
@@ -97,14 +97,11 @@ export default function PaintingCard({ painting }) {
       return;
     }
 
-    /*
-     * Stage 3: All attempts failed, local SVG fallback
-     */
     console.warn(
-      `[PaintingCard] All image attempts failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
+      `[PaintingCard] All image attempts failed for "${painting.title || 'Untitled'}", using local fallback`
     );
     image.onerror = null;
-    image.src = '/artwork-fallback.svg';
+    image.src = getLocalFallbackImage(painting);
   };
 
   /*
@@ -192,7 +189,7 @@ export default function PaintingCard({ painting }) {
       >
         <div className="painting-card-image-wrapper">
           <img
-            src={primaryImageUrl || fallbackImageUrl || '/artwork-fallback.svg'}
+            src={primaryImageUrl || fallbackImageUrl || getLocalFallbackImage(painting)}
             alt={painting.title || 'Artwork'}
             loading="lazy"
             decoding="async"

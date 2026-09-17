@@ -12,7 +12,7 @@ export const homeArtworks = [
 
   {
     id: 'home-persistence-of-memory',
-    src: 'https://cdn.dribbble.com/userupload/48815862/file/c1a2afe1b81a13a91c1ab0a19b92764a.jpg?crop=0x487-4961x4207&format=webp&resize=640x480&vertical=center',
+    src: '/artworks/rec-starry-abstract.jpg',
     title: 'The Persistence of Memory',
     artist: 'Salvador Dalí',
     category: 'Abstract',
@@ -34,7 +34,7 @@ export const homeArtworks = [
 
   {
     id: 'home-wanderer-above-the-sea-of-fog',
-    src: 'https://cdn.dribbble.com/userupload/46119240/file/09f542f4f374a36c7cee4f668d183ad6.jpg?format=webp&resize=640x480&vertical=center',
+    src: '/artworks/rec-misty-mountains.jpg',
     title: 'Wanderer above the Sea of Fog',
     artist: 'Caspar David Friedrich',
     category: 'Landscape',
@@ -56,7 +56,7 @@ export const homeArtworks = [
 
   {
     id: 'home-girl-with-a-pearl-earring',
-    src: 'https://cdn.dribbble.com/userupload/48847961/file/30ea1d838eb96c908387382c8d122cd9.jpg?format=webp&resize=640x480&vertical=center',
+    src: '/artworks/rec-baroque-portrait.jpg',
     title: 'Girl with a Pearl Earring',
     artist: 'Johannes Vermeer',
     category: 'Figurative',
@@ -78,7 +78,7 @@ export const homeArtworks = [
 
   {
     id: 'artvee-400593',
-    src: 'https://mdl.artvee.com/ft/400593mt.jpg',
+    src: '/artworks/rec-provencal-village.jpg',
     title: 'Artvee Featured Artwork',
     artist: 'Unknown Artist',
     category: 'Figurative',
@@ -90,7 +90,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-c4db7c9e',
-    src: 'https://api.nga.gov/iiif/c4db7c9e-1893-475d-996d-e6e4b6966295__900/full/950,/0/default.jpg',
+    src: '/artworks/rec-floral-still-life.jpg',
     title: 'National Gallery Collection I',
     artist: 'National Gallery of Art',
     category: 'Figurative',
@@ -102,7 +102,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-eaee47d9',
-    src: 'https://api.nga.gov/iiif/eaee47d9-92b9-43f0-8ed7-cdabdf0334d1__900/full/950,/0/default.jpg',
+    src: '/artworks/rec-sunflower-field.jpg',
     title: 'National Gallery Collection II',
     artist: 'National Gallery of Art',
     category: 'Abstract',
@@ -114,7 +114,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-bf17b33c',
-    src: 'https://api.nga.gov/iiif/bf17b33c-ebcc-459d-915a-7d85b9963d1d__900/full/950,/0/default.jpg',
+    src: '/artworks/rec-baroque-portrait.jpg',
     title: 'National Gallery Collection III',
     artist: 'National Gallery of Art',
     category: 'Religious',
@@ -126,7 +126,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-7c707158',
-    src: 'https://api.nga.gov/iiif/7c707158-95a0-4b7c-b6d3-db5a7567817b/full/950,/0/default.jpg',
+    src: '/artworks/rec-misty-mountains.jpg',
     title: 'National Gallery Collection IV',
     artist: 'National Gallery of Art',
     category: 'Landscape',
@@ -138,7 +138,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-46633bd6',
-    src: 'https://api.nga.gov/iiif/46633bd6-4834-40fb-8ce0-fb975c731dc1/full/950,/0/default.jpg',
+    src: '/artworks/rec-provencal-village.jpg',
     title: 'National Gallery Collection V',
     artist: 'National Gallery of Art',
     category: 'Landscape',
@@ -150,7 +150,7 @@ export const homeArtworks = [
 
   {
     id: 'nga-3a640014',
-    src: 'https://api.nga.gov/iiif/3a640014-a2f0-4cd4-b440-979f62316da2/full/950,/0/default.jpg',
+    src: '/artworks/rec-floral-still-life.jpg',
     title: 'National Gallery Collection VI',
     artist: 'National Gallery of Art',
     category: 'Figurative',
