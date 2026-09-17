@@ -191,6 +191,8 @@ router.get('/proxy-image', async (req, res) => {
       String(req.query.url || '')
     );
   } catch {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.status(400).json({
       error: 'Invalid image URL'
     });
@@ -205,6 +207,8 @@ router.get('/proxy-image', async (req, res) => {
     console.error(
       `[ImageProxy] Host rejected: ${imageUrl.hostname} is not in ALLOWED_IMAGE_HOSTS`
     );
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.status(400).json({
       error: 'Image host not allowed'
     });
@@ -302,6 +306,8 @@ router.get('/proxy-image', async (req, res) => {
         `[ImageProxy] Upstream image fetch failed for host ${imageUrl.hostname}: status ${imageResponse.status} ${imageResponse.statusText}`
       );
 
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       return res.status(502).json({
         error:
           'Image source unavailable',
@@ -322,6 +328,8 @@ router.get('/proxy-image', async (req, res) => {
         .toLowerCase() || '';
 
     if (!contentType.startsWith('image/')) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       return res.status(502).json({
         error:
           'Source did not return an image'
@@ -338,6 +346,8 @@ router.get('/proxy-image', async (req, res) => {
       );
 
     if (!imageBuffer.length) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
       return res.status(502).json({
         error:
           'Image source returned an empty image'
@@ -379,6 +389,9 @@ router.get('/proxy-image', async (req, res) => {
 
   } catch (err) {
     clearTimeout(timeout);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
     if (
       err.name === 'AbortError'

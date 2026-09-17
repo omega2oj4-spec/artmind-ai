@@ -54,45 +54,38 @@ export default function PaintingCard({ painting }) {
     painting.thumbnail ||
     '';
 
-  // Main image through backend proxy
-  const primaryImageUrl = rawImageUrl
-    ? proxyImageUrl(rawImageUrl)
-    : '';
-
-  // Thumbnail also goes through backend proxy
-  const fallbackImageUrl = thumbnailUrl
-    ? proxyImageUrl(thumbnailUrl)
-    : '';
-
   const handleImageError = (event) => {
     const image = event.currentTarget;
 
     /*
-     * First fallback:
-     * Try the thumbnail THROUGH OUR SERVER.
-     *
-     * We intentionally do NOT use rawImageUrl directly because
-     * Art Institute and some other sources can block browsers.
+     * Stage 1: Raw URL failed, try backend proxy for raw image
      */
-    if (
-      !image.dataset.triedThumbnail &&
-      fallbackImageUrl &&
-      image.src !== fallbackImageUrl
-    ) {
+    if (!image.dataset.triedProxy && rawImageUrl) {
       console.warn(
-        `[PaintingCard] Primary image load failed for "${painting.title || 'Untitled'}": ${image.src}`
+        `[PaintingCard] Direct raw image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying proxy`
       );
-      image.dataset.triedThumbnail = 'true';
-      image.src = fallbackImageUrl;
+      image.dataset.triedProxy = 'true';
+      image.src = proxyImageUrl(rawImageUrl);
       return;
     }
 
     /*
-     * Final fallback:
-     * Local SVG. No more external requests.
+     * Stage 2: Proxy failed, try backend proxy for thumbnail
+     */
+    if (!image.dataset.triedThumbnail && thumbnailUrl) {
+      console.warn(
+        `[PaintingCard] Proxy image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying thumbnail`
+      );
+      image.dataset.triedThumbnail = 'true';
+      image.src = proxyImageUrl(thumbnailUrl);
+      return;
+    }
+
+    /*
+     * Stage 3: Thumbnail failed (or no thumbnail exists), local SVG fallback
      */
     console.warn(
-      `[PaintingCard] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}`
+      `[PaintingCard] All image sources failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
     );
     image.onerror = null;
     image.src = '/artwork-fallback.svg';
@@ -183,7 +176,7 @@ export default function PaintingCard({ painting }) {
       >
         <div className="painting-card-image-wrapper">
           <img
-            src={primaryImageUrl || '/artwork-fallback.svg'}
+            src={rawImageUrl || (thumbnailUrl ? proxyImageUrl(thumbnailUrl) : '/artwork-fallback.svg')}
             alt={painting.title || 'Artwork'}
             loading="lazy"
             decoding="async"

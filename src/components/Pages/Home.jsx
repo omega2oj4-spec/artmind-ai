@@ -37,6 +37,36 @@ const TypewriterText = ({ text, delay = 0 }) => {
 const CarouselItem = ({ art }) => {
   const artwork = getHomeArtworkById(art.id) || art;
   const location = useLocation();
+  const rawUrl = artwork.src || artwork.imageUrl;
+  const thumbnailUrl = artwork.thumbnailUrl || artwork.thumbnail;
+
+  const handleImageError = (event) => {
+    const image = event.currentTarget;
+
+    if (!image.dataset.triedProxy && rawUrl) {
+      console.warn(
+        `[Home Carousel] Direct raw image load failed for "${artwork.title || 'Untitled'}": ${image.src}, trying proxy`
+      );
+      image.dataset.triedProxy = 'true';
+      image.src = proxyImageUrl(rawUrl);
+      return;
+    }
+
+    if (!image.dataset.triedThumbnail && thumbnailUrl) {
+      console.warn(
+        `[Home Carousel] Proxy image load failed for "${artwork.title || 'Untitled'}": ${image.src}, trying thumbnail`
+      );
+      image.dataset.triedThumbnail = 'true';
+      image.src = proxyImageUrl(thumbnailUrl);
+      return;
+    }
+
+    console.warn(
+      `[Home Carousel] All image sources failed for "${artwork.title || 'Untitled'}": ${image.src}, using local fallback`
+    );
+    image.onerror = null;
+    image.src = '/artwork-fallback.svg';
+  };
 
   return (
     <Link
@@ -45,7 +75,13 @@ const CarouselItem = ({ art }) => {
       state={{ from: { pathname: location.pathname, search: location.search, hash: location.hash } }}
       aria-label={`View ${artwork.title} details`}
     >
-      <img src={proxyImageUrl(artwork.src)} alt={artwork.title} loading="lazy" referrerPolicy="no-referrer" />
+      <img
+        src={rawUrl || (thumbnailUrl ? proxyImageUrl(thumbnailUrl) : '/artwork-fallback.svg')}
+        alt={artwork.title}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={handleImageError}
+      />
       <div className="artwork-info-always-visible">
         <h3 className="artwork-title">
           <TypewriterText text={artwork.title} />
