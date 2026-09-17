@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="autumnSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF7F50"/>
+      <stop offset="100%" style="stop-color:#FFD700"/>
+    </linearGradient>
+    <linearGradient id="forestGround" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B4513"/>
+      <stop offset="100%" style="stop-color:#654321"/>
+    </linearGradient>
+  </defs>
+  <!-- Sky -->
+  <rect width="400" height="180" fill="url(#autumnSky)"/>
+  <!-- Forest background -->
+  <rect y="180" width="400" height="120" fill="url(#forestGround)"/>
+  <!-- Path -->
+  <path d="M200,300 Q180,240 200,180 Q220,240 200,300" fill="#D2691E"/>
+  <!-- Trees on left -->
+  <path d="M20,180 L50,80 L80,180 Z" fill="#8B0000"/>
+  <rect x="45" y="180" width="10" height="40" fill="#5D4037"/>
+  <path d="M60,180 L90,100 L120,180 Z" fill="#B22222"/>
+  <rect x="85" y="180" width="10" height="35" fill="#5D4037"/>
+  <!-- Trees on right -->
+  <path d="M280,180 L310,90 L340,180 Z" fill="#8B0000"/>
+  <rect x="305" y="180" width="10" height="38" fill="#5D4037"/>
+  <path d="M320,180 L350,70 L380,180 Z" fill="#B22222"/>
+  <rect x="345" y="180" width="10" height="42" fill="#5D4037"/>
+  <!-- Falling leaves -->
+  <ellipse cx="100" cy="120" rx="8" ry="5" fill="#FF6347" transform="rotate(30 100 120)"/>
+  <ellipse cx="300" cy="140" rx="6" ry="4" fill="#FF8C00" transform="rotate(-20 300 140)"/>
+  <ellipse cx="150" cy="160" rx="7" ry="4" fill="#FFD700" transform="rotate(45 150 160)"/>
+  <ellipse cx="250" cy="100" rx="5" ry="3" fill="#FF4500" transform="rotate(-15 250 100)"/>
+</svg>

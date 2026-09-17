@@ -640,7 +640,7 @@ export default function Dashboard() {
               <div className="empty-dashboard-state">
                 <div className="empty-state-preview">
                   <img
-                    src="/artworks/recommended-placeholder.jpg"
+                    src="/artworks/recommended-placeholder.svg"
                     alt="Provencal village painting - sample recommendation"
                     className="empty-state-painting"
                   />
@@ -691,7 +691,7 @@ export default function Dashboard() {
               <div className="empty-dashboard-state">
                 <div className="empty-state-preview">
                   <img
-                    src="/artworks/recently-viewed-placeholder.jpg"
+                    src="/artworks/recently-viewed-placeholder.svg"
                     alt="Autumn forest path painting - recently viewed placeholder"
                     className="empty-state-painting"
                   />
@@ -742,7 +742,7 @@ export default function Dashboard() {
               <div className="empty-dashboard-state">
                 <div className="empty-state-preview">
                   <img
-                    src="/artworks/ai-curated-placeholder.jpg"
+                    src="/artworks/ai-curated-placeholder.svg"
                     alt="Abstract expressionist painting - AI curated placeholder"
                     className="empty-state-painting"
                   />

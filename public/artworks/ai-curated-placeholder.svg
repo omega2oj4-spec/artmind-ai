@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="abstractBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E6E6FA"/>
+      <stop offset="50%" style="stop-color:#DDA0DD"/>
+      <stop offset="100%" style="stop-color:#BA55D3"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#abstractBg)"/>
+  <!-- Abstract shapes -->
+  <circle cx="100" cy="100" r="60" fill="#9370DB" opacity="0.7"/>
+  <circle cx="300" cy="200" r="80" fill="#8A2BE2" opacity="0.6"/>
+  <rect x="150" y="50" width="100" height="200" fill="#9932CC" opacity="0.5" transform="rotate(15 200 150)"/>
+  <path d="M50,250 Q150,150 250,250 T350,200" stroke="#4B0082" stroke-width="8" fill="none"/>
+  <circle cx="200" cy="150" r="40" fill="#FFD700" opacity="0.8"/>
+  <rect x="80" y="200" width="60" height="60" fill="#FF69B4" opacity="0.6" transform="rotate(-30 110 230)"/>
+  <circle cx="320" cy="80" r="30" fill="#00CED1" opacity="0.7"/>
+  <path d="M100,50 L150,100 L100,150 L50,100 Z" fill="#FF6347" opacity="0.5"/>
+  <rect x="250" y="220" width="80" height="40" fill="#32CD32" opacity="0.6" transform="rotate(10 290 240)"/>
+</svg>
