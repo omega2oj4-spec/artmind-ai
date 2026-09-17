@@ -638,6 +638,13 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="empty-dashboard-state">
+                <div className="empty-state-preview">
+                  <img
+                    src="/artworks/recommended-placeholder.jpg"
+                    alt="Provencal village painting - sample recommendation"
+                    className="empty-state-painting"
+                  />
+                </div>
                 <p>
                   Explore some artworks to
                   start receiving personalised
@@ -682,6 +689,13 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="empty-dashboard-state">
+                <div className="empty-state-preview">
+                  <img
+                    src="/artworks/recently-viewed-placeholder.jpg"
+                    alt="Autumn forest path painting - recently viewed placeholder"
+                    className="empty-state-painting"
+                  />
+                </div>
                 <p>
                   No recently viewed artworks
                   yet.
@@ -726,6 +740,13 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="empty-dashboard-state">
+                <div className="empty-state-preview">
+                  <img
+                    src="/artworks/ai-curated-placeholder.jpg"
+                    alt="Abstract expressionist painting - AI curated placeholder"
+                    className="empty-state-painting"
+                  />
+                </div>
                 <p>
                   More curated artworks will
                   appear as ArtMind learns your
