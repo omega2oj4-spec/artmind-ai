@@ -54,38 +54,38 @@ export default function PaintingCard({ painting }) {
     painting.thumbnail ||
     '';
 
+  const primaryImageUrl = rawImageUrl
+    ? proxyImageUrl(rawImageUrl)
+    : '';
+
+  const fallbackImageUrl = thumbnailUrl
+    ? proxyImageUrl(thumbnailUrl)
+    : '';
+
   const handleImageError = (event) => {
     const image = event.currentTarget;
 
     /*
-     * Stage 1: Raw URL failed, try backend proxy for raw image
+     * Stage 1: Primary URL failed, try proxied thumbnail
      */
-    if (!image.dataset.triedProxy && rawImageUrl) {
+    if (
+      !image.dataset.triedThumbnail &&
+      fallbackImageUrl &&
+      image.src !== fallbackImageUrl
+    ) {
       console.warn(
-        `[PaintingCard] Direct raw image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying proxy`
-      );
-      image.dataset.triedProxy = 'true';
-      image.src = proxyImageUrl(rawImageUrl);
-      return;
-    }
-
-    /*
-     * Stage 2: Proxy failed, try backend proxy for thumbnail
-     */
-    if (!image.dataset.triedThumbnail && thumbnailUrl) {
-      console.warn(
-        `[PaintingCard] Proxy image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying thumbnail`
+        `[PaintingCard] Primary image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying thumbnail`
       );
       image.dataset.triedThumbnail = 'true';
-      image.src = proxyImageUrl(thumbnailUrl);
+      image.src = fallbackImageUrl;
       return;
     }
 
     /*
-     * Stage 3: Thumbnail failed (or no thumbnail exists), local SVG fallback
+     * Stage 2: Thumbnail failed (or no thumbnail exists), local SVG fallback
      */
     console.warn(
-      `[PaintingCard] All image sources failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
+      `[PaintingCard] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
     );
     image.onerror = null;
     image.src = '/artwork-fallback.svg';
@@ -176,7 +176,7 @@ export default function PaintingCard({ painting }) {
       >
         <div className="painting-card-image-wrapper">
           <img
-            src={rawImageUrl || (thumbnailUrl ? proxyImageUrl(thumbnailUrl) : '/artwork-fallback.svg')}
+            src={primaryImageUrl || fallbackImageUrl || '/artwork-fallback.svg'}
             alt={painting.title || 'Artwork'}
             loading="lazy"
             decoding="async"

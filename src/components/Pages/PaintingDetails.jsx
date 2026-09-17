@@ -253,37 +253,29 @@ export default function PaintingDetails() {
         <div className="details-image-section">
           <div className="details-image-wrapper">
             <img
-              src={getArtworkImageUrl(painting) || (painting.thumbnailUrl ? proxyImageUrl(painting.thumbnailUrl) : '/artwork-fallback.svg')}
+              src={proxyImageUrl(getArtworkImageUrl(painting))}
               alt={painting.title}
               referrerPolicy="no-referrer"
               onError={(event) => {
                 const image = event.currentTarget;
-                const rawUrl = getArtworkImageUrl(painting);
                 const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail;
+                const fallbackImageUrl = thumbnailUrl ? proxyImageUrl(thumbnailUrl) : '';
 
-                /* Stage 1: Raw URL failed, try backend proxy for raw image */
-                if (!image.dataset.triedProxy && rawUrl) {
+                if (
+                  !image.dataset.triedThumbnail &&
+                  fallbackImageUrl &&
+                  image.src !== fallbackImageUrl
+                ) {
                   console.warn(
-                    `[PaintingDetails] Direct raw image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying proxy`
-                  );
-                  image.dataset.triedProxy = 'true';
-                  image.src = proxyImageUrl(rawUrl);
-                  return;
-                }
-
-                /* Stage 2: Proxy failed, try backend proxy for thumbnail */
-                if (!image.dataset.triedThumbnail && thumbnailUrl) {
-                  console.warn(
-                    `[PaintingDetails] Proxy image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying thumbnail`
+                    `[PaintingDetails] Primary image load failed for "${painting.title || 'Untitled'}": ${image.src}, trying thumbnail`
                   );
                   image.dataset.triedThumbnail = 'true';
-                  image.src = proxyImageUrl(thumbnailUrl);
+                  image.src = fallbackImageUrl;
                   return;
                 }
 
-                /* Stage 3: Thumbnail failed (or no thumbnail exists), local SVG fallback */
                 console.warn(
-                  `[PaintingDetails] All image sources failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
+                  `[PaintingDetails] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
                 );
                 image.onerror = null;
                 image.src = '/artwork-fallback.svg';
