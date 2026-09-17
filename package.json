@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run client\" \"npm run server\"",
+    "dev": "concurrently --kill-others-on-fail \"npm run client\" \"npm run server\"",
     "client": "vite",
     "server": "cd server && node index.js",
     "build": "vite build",

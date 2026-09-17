@@ -1,10 +1,14 @@
 import React, {
   useState,
   useEffect,
-  useRef
+  useRef,
+  useMemo
 } from 'react';
 
-import { useLocation, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useSearchParams
+} from 'react-router-dom';
 
 import PaintingCard from '../PaintingCard.jsx';
 
@@ -17,6 +21,11 @@ import {
 } from 'react-icons/fa';
 
 import API_BASE from '../../utils/api.js';
+
+import {
+  homeArtworks
+} from '../../data/homeArtworks.js';
+
 import './Gallery.css';
 
 const CATEGORIES = [
@@ -32,17 +41,29 @@ const CATEGORIES = [
 export default function Gallery() {
   const [searchParams, setSearchParams] =
     useSearchParams();
+
   const location = useLocation();
 
-  const [paintings, setPaintings] =
-    useState([]);
+  /*
+   * LOCAL-FIRST GALLERY
+   *
+   * The Gallery starts with homeArtworks immediately.
+   * It does not wait for MongoDB, Art Institute,
+   * Met Museum, or any external catalog.
+   */
+  const [paintings] =
+    useState(homeArtworks);
 
-  const [filterOptions, setFilterOptions] = useState({
-    categories: CATEGORIES.slice(1), styles: [], surfaces: [], colorMediums: []
-  });
+  const [filterOptions, setFilterOptions] =
+    useState({
+      categories: CATEGORIES.slice(1),
+      styles: [],
+      surfaces: [],
+      colorMediums: []
+    });
 
   const [loading, setLoading] =
-    useState(true);
+    useState(false);
 
   const [activeCategory, setActiveCategory] =
     useState(
@@ -93,52 +114,137 @@ export default function Gallery() {
   ] = useState(false);
 
   const resultsRef = useRef(null);
-  const galleryGridRef = useRef(null);
 
-  // Values come from the backend's synced source catalogue, not a hard-coded
-  // frontend list, so filters grow with the collection.
+  const galleryGridRef =
+    useRef(null);
+
+  /*
+   * Build filter options from local artwork data.
+   *
+   * This means the Gallery does not need the
+   * backend just to populate its filters.
+   */
   useEffect(() => {
-    fetch(`${API_BASE}/api/paintings/filters`)
-      .then((res) => res.ok ? res.json() : Promise.reject(new Error('Filter request failed')))
-      .then((data) => setFilterOptions({
-        categories: data.categories?.length ? data.categories : CATEGORIES.slice(1),
-        styles: data.styles || [], surfaces: data.surfaces || [], colorMediums: data.colorMediums || []
-      }))
-      .catch((err) => console.error('Error loading gallery filters:', err));
+    const categories = [
+      ...new Set(
+        homeArtworks
+          .map(
+            (painting) =>
+              painting.category
+          )
+          .filter(Boolean)
+      )
+    ];
+
+    const styles = [
+      ...new Set(
+        homeArtworks
+          .map(
+            (painting) =>
+              painting.style
+          )
+          .filter(Boolean)
+      )
+    ].sort();
+
+    const colorMediums = [
+      ...new Set(
+        homeArtworks
+          .map(
+            (painting) =>
+              painting.colorMedium
+          )
+          .filter(Boolean)
+      )
+    ].sort();
+
+    /*
+     * Your current homeArtworks data does not
+     * consistently contain "surface".
+     *
+     * Keep a useful default list so the filter
+     * remains available when database artworks
+     * are added later.
+     */
+    const surfaces = [
+      ...new Set(
+        homeArtworks
+          .map(
+            (painting) =>
+              painting.surface
+          )
+          .filter(Boolean)
+      )
+    ].sort();
+
+    setFilterOptions({
+      categories:
+        categories.length
+          ? categories
+          : CATEGORIES.slice(1),
+
+      styles,
+
+      surfaces,
+
+      colorMediums
+    });
   }, []);
 
-  // Detail pages explicitly request a clean gallery return.  Reset the document
-  // scroll position after this route mounts and ensure no stale inline overflow
-  // setting can prevent upward scrolling.
+  /*
+   * Reset document scrolling when returning
+   * from a painting details page.
+   */
   useEffect(() => {
-    document.documentElement.style.overflowY = 'auto';
-    document.body.style.overflowY = 'auto';
+    document.documentElement.style.overflowY =
+      'auto';
+
+    document.body.style.overflowY =
+      'auto';
 
     if (location.state?.resetScroll) {
       requestAnimationFrame(() => {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
+        window.scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'auto'
+        });
+
+        document.documentElement.scrollTop =
+          0;
+
+        document.body.scrollTop =
+          0;
       });
     }
-  }, [location.key, location.state]);
-
-  // A return from Painting Details targets the embedded dashboard gallery.
-  // Scroll there once on route entry only; never tie this to artwork loading,
-  // otherwise it would override the visitor's own upward scroll.
-  useEffect(() => {
-    if (location.hash !== '#gallery') return;
-
-    requestAnimationFrame(() => {
-      document.getElementById('gallery')?.scrollIntoView({
-        behavior: 'auto',
-        block: 'start'
-      });
-    });
-  }, [location.key, location.hash]);
+  }, [
+    location.key,
+    location.state
+  ]);
 
   /*
-   * Keep filters synced with URL.
+   * Return to the embedded dashboard gallery.
+   */
+  useEffect(() => {
+    if (location.hash !== '#gallery') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById('gallery')
+        ?.scrollIntoView({
+          behavior: 'auto',
+          block: 'start'
+        });
+    });
+  }, [
+    location.key,
+    location.hash
+  ]);
+
+  /*
+   * Keep URL filters synchronized.
    */
   useEffect(() => {
     const cat =
@@ -164,10 +270,24 @@ export default function Gallery() {
     }
 
     if (
+      !cat &&
+      activeCategory !== 'All'
+    ) {
+      setActiveCategory('All');
+    }
+
+    if (
       search !== null &&
       search !== searchQuery
     ) {
       setSearchQuery(search);
+    }
+
+    if (
+      search === null &&
+      searchQuery !== ''
+    ) {
+      setSearchQuery('');
     }
 
     if (
@@ -178,10 +298,24 @@ export default function Gallery() {
     }
 
     if (
+      !style &&
+      selectedStyle !== 'All Styles'
+    ) {
+      setSelectedStyle('All Styles');
+    }
+
+    if (
       surface &&
       surface !== selectedSurface
     ) {
       setSelectedSurface(surface);
+    }
+
+    if (
+      !surface &&
+      selectedSurface !== 'All Surfaces'
+    ) {
+      setSelectedSurface('All Surfaces');
     }
 
     if (
@@ -192,26 +326,172 @@ export default function Gallery() {
         colorMedium
       );
     }
+
+    if (
+      !colorMedium &&
+      selectedColorMedium !== 'All Mediums'
+    ) {
+      setSelectedColorMedium(
+        'All Mediums'
+      );
+    }
   }, [searchParams]);
 
   /*
-   * Load paintings whenever
-   * filters change.
+   * LOCAL FILTERING
+   *
+   * This is the important part.
+   *
+   * We filter homeArtworks in the browser
+   * instead of requesting the external catalog
+   * every time a filter changes.
    */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPaintings();
-    }, 300); // Debounce filter changes
+  const filteredPaintings = useMemo(() => {
+    const query =
+      searchQuery
+        .trim()
+        .toLowerCase();
 
-    return () => clearTimeout(timer);
+    return homeArtworks.filter(
+      (painting) => {
+        /*
+         * CATEGORY
+         */
+        if (
+          activeCategory !== 'All'
+        ) {
+          if (
+            painting.category?.toLowerCase() !==
+            activeCategory.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * PAINTING TYPE
+         */
+        if (
+          selectedPaintingType !==
+          'All Types'
+        ) {
+          if (
+            painting.category?.toLowerCase() !==
+            selectedPaintingType.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * STYLE
+         */
+        if (
+          selectedStyle !==
+          'All Styles'
+        ) {
+          if (
+            painting.style?.toLowerCase() !==
+            selectedStyle.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * SURFACE
+         */
+        if (
+          selectedSurface !==
+          'All Surfaces'
+        ) {
+          if (
+            painting.surface?.toLowerCase() !==
+            selectedSurface.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * COLOR MEDIUM
+         */
+        if (
+          selectedColorMedium !==
+          'All Mediums'
+        ) {
+          if (
+            painting.colorMedium?.toLowerCase() !==
+            selectedColorMedium.toLowerCase()
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * POPULARITY
+         *
+         * Local artwork does not always have
+         * popularity, so only apply this when
+         * the artwork has a popularity value.
+         */
+        if (
+          selectedPopularity !==
+          'Any Popularity'
+        ) {
+          const popularity =
+            Number(
+              painting.popularity || 0
+            );
+
+          if (
+            popularity <
+            Number(
+              selectedPopularity
+            )
+          ) {
+            return false;
+          }
+        }
+
+        /*
+         * SEARCH
+         */
+        if (query) {
+          const searchableText = [
+            painting.title,
+            painting.artist,
+            painting.description,
+            painting.category,
+            painting.style,
+            painting.colorMedium,
+            painting.surface,
+            ...(painting.tags || [])
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+          if (
+            !searchableText.includes(
+              query
+            )
+          ) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+    );
   }, [
     activeCategory,
+    searchQuery,
     selectedStyle,
     selectedSurface,
     selectedColorMedium,
     selectedPaintingType,
-    selectedPopularity,
-    searchQuery
+    selectedPopularity
   ]);
 
   /*
@@ -223,64 +503,70 @@ export default function Gallery() {
 
     if (
       !paintingId ||
-      !paintingId.startsWith('painting-') ||
-      !document.getElementById(
-        paintingId
+      !paintingId.startsWith(
+        'painting-'
       )
     ) {
       return;
     }
 
+    const element =
+      document.getElementById(
+        paintingId
+      );
+
+    if (!element) {
+      return;
+    }
+
     requestAnimationFrame(() => {
-      document
-        .getElementById(paintingId)
-        ?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
     });
-  }, [paintings]);
+  }, [
+    filteredPaintings
+  ]);
 
   /*
    * Scroll to category results.
    */
   useEffect(() => {
     if (
-      !scrollToCategoryResults ||
-      loading
+      !scrollToCategoryResults
     ) {
       return;
     }
 
-    // Use setTimeout to ensure the DOM has updated with new paintings
     setTimeout(() => {
-      // Scroll to the gallery grid (beginning of paintings)
       galleryGridRef.current?.scrollIntoView({
         behavior: 'smooth',
         block: 'start'
       });
-      
-      // Fallback: scroll to results info if grid ref doesn't work
-      if (!galleryGridRef.current) {
+
+      if (
+        !galleryGridRef.current
+      ) {
         resultsRef.current?.scrollIntoView({
           behavior: 'smooth',
           block: 'start'
         });
       }
-      
-      setScrollToCategoryResults(false);
+
+      setScrollToCategoryResults(
+        false
+      );
     }, 100);
   }, [
-    loading,
-    paintings,
+    filteredPaintings,
     scrollToCategoryResults
   ]);
 
   /*
    * Save user's search to MongoDB.
    *
-   * Dashboard uses this information
-   * to personalize recommendations.
+   * This does NOT control the Gallery results.
    */
   const saveSearchHistory = async (
     query
@@ -318,129 +604,20 @@ export default function Gallery() {
         return;
       }
 
-      /*
-       * Tell Dashboard.jsx that
-       * user activity changed.
-       */
       window.dispatchEvent(
         new CustomEvent(
           'artmind:activity-updated'
         )
       );
-
     } catch (err) {
+      /*
+       * Search history failing should never
+       * break the Gallery.
+       */
       console.error(
         'Error saving search history:',
         err
       );
-    }
-  };
-
-  /*
-   * Fetch gallery paintings.
-   */
-  const fetchPaintings = async () => {
-    setLoading(true);
-
-    try {
-      let url =
-        `${API_BASE}/api/paintings?`;
-
-      const selectedCategory =
-        selectedPaintingType !== 'All Types'
-          ? selectedPaintingType
-          : activeCategory;
-
-      if (selectedCategory !== 'All') {
-        url +=
-          `category=${encodeURIComponent(
-            selectedCategory
-          )}&`;
-      }
-
-      if (
-        selectedStyle !==
-        'All Styles'
-      ) {
-        url +=
-          `style=${encodeURIComponent(
-            selectedStyle
-          )}&`;
-      }
-
-      if (
-        selectedSurface !==
-        'All Surfaces'
-      ) {
-        url +=
-          `surface=${encodeURIComponent(
-            selectedSurface
-          )}&`;
-      }
-
-      if (
-        selectedColorMedium !==
-        'All Mediums'
-      ) {
-        url +=
-          `colorMedium=${encodeURIComponent(
-            selectedColorMedium
-          )}&`;
-      }
-
-      if (
-        searchQuery.trim()
-      ) {
-        url +=
-          `search=${encodeURIComponent(
-            searchQuery.trim()
-          )}&`;
-      }
-
-      if (
-        selectedPaintingType !==
-        'All Types'
-      ) {
-        url +=
-          `paintingType=${encodeURIComponent(
-            selectedPaintingType
-          )}&`;
-      }
-
-      if (
-        selectedPopularity !==
-        'Any Popularity'
-      ) {
-        url +=
-          `minPopularity=${encodeURIComponent(
-            selectedPopularity
-          )}&`;
-      }
-
-      const res =
-        await fetch(url);
-
-      if (!res.ok) {
-        throw new Error(
-          'Failed to load gallery paintings'
-        );
-      }
-
-      const data =
-        await res.json();
-
-      setPaintings(Array.isArray(data) ? data : []);
-
-    } catch (err) {
-      console.error(
-        'Error loading gallery:',
-        err
-      );
-
-      setPaintings([]);
-
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -505,16 +682,14 @@ export default function Gallery() {
       }
 
       /*
-       * Save search for
-       * personalization.
+       * Save search history,
+       * but do not make it necessary
+       * for search results.
        */
       await saveSearchHistory(
         query
       );
 
-      /*
-       * Update URL.
-       */
       const newParams =
         new URLSearchParams(
           searchParams
@@ -586,7 +761,6 @@ export default function Gallery() {
         newParams.delete(
           'colorMedium'
         );
-
       } else {
         newParams.set(
           'category',
@@ -603,6 +777,25 @@ export default function Gallery() {
       );
     };
 
+  /*
+   * Reset all filters.
+   */
+  const clearFilters = () => {
+    setActiveCategory('All');
+    setSearchQuery('');
+    setSelectedStyle('All Styles');
+    setSelectedSurface('All Surfaces');
+    setSelectedColorMedium('All Mediums');
+    setSelectedPaintingType('All Types');
+    setSelectedPopularity('Any Popularity');
+
+    setSearchParams({});
+
+    setScrollToCategoryResults(
+      true
+    );
+  };
+
   return (
     <main
       className="gallery-container"
@@ -617,11 +810,10 @@ export default function Gallery() {
         </h1>
 
         <p className="gallery-subtitle">
-          Discover public domain fine art
-          curated from the Art Institute of
-          Chicago, filtered by categories,
-          artistic styles, surface, and
-          color medium.
+          Discover fine art from the
+          ArtMind collection, filtered by
+          categories, artistic styles,
+          surface, and color medium.
         </p>
 
       </div>
@@ -669,10 +861,17 @@ export default function Gallery() {
 
           <div className="gallery-categories">
 
-            {['All', ...filterOptions.categories].map(
+            {[
+              'All',
+              ...filterOptions.categories.filter(
+                (category) =>
+                  category !== 'All'
+              )
+            ].map(
               (cat) => (
                 <button
                   key={cat}
+                  type="button"
                   className={`category-btn ${
                     activeCategory === cat
                       ? 'active'
@@ -703,6 +902,7 @@ export default function Gallery() {
           </div>
 
           <button
+            type="button"
             className={`toggle-filter-btn ${
               showFilters
                 ? 'active'
@@ -717,7 +917,8 @@ export default function Gallery() {
 
             <FaFilter
               style={{
-                marginRight: '6px'
+                marginRight:
+                  '6px'
               }}
             />
 
@@ -805,7 +1006,15 @@ export default function Gallery() {
                     All Surfaces
                   </option>
 
-                  {filterOptions.surfaces.map((surface) => <option key={surface}>{surface}</option>)}
+                  {filterOptions.surfaces.map(
+                    (surface) => (
+                      <option
+                        key={surface}
+                      >
+                        {surface}
+                      </option>
+                    )
+                  )}
 
                 </select>
 
@@ -840,7 +1049,15 @@ export default function Gallery() {
                     All Mediums
                   </option>
 
-                  {filterOptions.colorMediums.map((medium) => <option key={medium}>{medium}</option>)}
+                  {filterOptions.colorMediums.map(
+                    (medium) => (
+                      <option
+                        key={medium}
+                      >
+                        {medium}
+                      </option>
+                    )
+                  )}
 
                 </select>
 
@@ -875,7 +1092,15 @@ export default function Gallery() {
                     All Styles
                   </option>
 
-                  {filterOptions.styles.map((style) => <option key={style}>{style}</option>)}
+                  {filterOptions.styles.map(
+                    (style) => (
+                      <option
+                        key={style}
+                      >
+                        {style}
+                      </option>
+                    )
+                  )}
 
                 </select>
 
@@ -915,6 +1140,23 @@ export default function Gallery() {
 
               </div>
 
+              {/* CLEAR */}
+              <div className="filter-item">
+
+                <label>
+                  Reset
+                </label>
+
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="nl-search-btn"
+                >
+                  Clear Filters
+                </button>
+
+              </div>
+
             </div>
 
           </div>
@@ -931,7 +1173,7 @@ export default function Gallery() {
         <p>
           Showing{' '}
           <strong>
-            {paintings.length}
+            {filteredPaintings.length}
           </strong>{' '}
           masterworks in{' '}
           <strong>
@@ -942,7 +1184,10 @@ export default function Gallery() {
       </div>
 
       {/* RESULTS */}
-      {loading ? (
+
+      {loading &&
+      filteredPaintings.length === 0 ? (
+
         <div className="gallery-loading-skeleton">
 
           <div className="skeleton-card"></div>
@@ -954,18 +1199,25 @@ export default function Gallery() {
 
         </div>
 
-      ) : paintings.length > 0 ? (
+      ) : filteredPaintings.length > 0 ? (
 
-        <div className="gallery-grid" ref={galleryGridRef}>
+        <div
+          className="gallery-grid"
+          ref={galleryGridRef}
+        >
 
-          {paintings.map(
+          {filteredPaintings.map(
             (painting) => (
               <PaintingCard
                 key={
                   painting._id ||
                   painting.id ||
                   painting.catalogId ||
-                  (painting.src || painting.imageUrl || '').split('?')[0]
+                  (
+                    painting.src ||
+                    painting.imageUrl ||
+                    ''
+                  ).split('?')[0]
                 }
                 painting={painting}
               />

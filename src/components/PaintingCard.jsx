@@ -13,67 +13,115 @@ export default function PaintingCard({ painting }) {
   if (!painting) return null;
 
   const paintingId = painting._id || painting.id || painting.catalogId;
-  const candidateIds = [painting._id, painting.id, painting.catalogId].filter(Boolean).map(String);
-  const isFav = favorites?.some((favId) => candidateIds.includes(String(favId)));
+
+  const candidateIds = [
+    painting._id,
+    painting.id,
+    painting.catalogId
+  ]
+    .filter(Boolean)
+    .map(String);
+
+  const isFav = favorites?.some((favId) =>
+    candidateIds.includes(String(favId))
+  );
+
   const [localIsFav, setLocalIsFav] = useState(isFav);
   const isTogglingRef = useRef(false);
 
   useEffect(() => {
-    // Only sync if we're not in the middle of a toggle operation
     if (!isTogglingRef.current) {
       setLocalIsFav(isFav);
     }
   }, [isFav]);
 
-  // Sources that block browser hotlinking are routed through the API image
-  // proxy, while retaining the actual image supplied by the catalogue.
+  /*
+   * ---------------------------------------------------------
+   * IMAGE HANDLING
+   * ---------------------------------------------------------
+   *
+   * IMPORTANT:
+   * Never send Art Institute / Artvee URLs directly to the
+   * browser. Some of these hosts reject browser requests.
+   *
+   * Everything goes through our backend proxy.
+   */
+
   const rawImageUrl = getArtworkImageUrl(painting);
-  const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail || '';
-  // Full IIIF images are primary. The source LQIP remains a reliable last
-  // fallback for a record whose full image cannot be reached.
-  const proxiedImageUrl = proxyImageUrl(rawImageUrl);
-  const imageUrl = proxiedImageUrl;
+
+  const thumbnailUrl =
+    painting.thumbnailUrl ||
+    painting.thumbnail ||
+    '';
+
+  // Main image through backend proxy
+  const primaryImageUrl = rawImageUrl
+    ? proxyImageUrl(rawImageUrl)
+    : '';
+
+  // Thumbnail also goes through backend proxy
+  const fallbackImageUrl = thumbnailUrl
+    ? proxyImageUrl(thumbnailUrl)
+    : '';
 
   const handleImageError = (event) => {
     const image = event.currentTarget;
 
-    // Step 1: If we haven't tried the raw (unproxied) URL yet, try it.
-    // Some IIIF hosts serve fine directly without the proxy.
-    if (!image.dataset.triedRaw && rawImageUrl && image.src !== rawImageUrl) {
-      image.dataset.triedRaw = 'true';
-      image.src = rawImageUrl;
-      return;
-    }
-
-    // Step 2: Try the thumbnail fallback (LQIP or smaller IIIF).
-    if (!image.dataset.triedThumbnail && thumbnailUrl && image.src !== thumbnailUrl) {
+    /*
+     * First fallback:
+     * Try the thumbnail THROUGH OUR SERVER.
+     *
+     * We intentionally do NOT use rawImageUrl directly because
+     * Art Institute and some other sources can block browsers.
+     */
+    if (
+      !image.dataset.triedThumbnail &&
+      fallbackImageUrl &&
+      image.src !== fallbackImageUrl
+    ) {
       image.dataset.triedThumbnail = 'true';
-      image.src = thumbnailUrl;
+      image.src = fallbackImageUrl;
       return;
     }
 
-    // Step 3: Use SVG placeholder.
+    /*
+     * Final fallback:
+     * Local SVG. No more external requests.
+     */
     image.onerror = null;
     image.src = '/artwork-fallback.svg';
   };
 
-  // Preserve the complete route (including gallery filters and search query)
-  // so Painting Details can return through the browser history to this view.
+  /*
+   * Preserve gallery/search/filter state when opening details.
+   */
   const sourceLocation = {
     pathname: location.pathname,
     search: location.search,
     hash: location.hash
   };
 
-
-  const downloadName = `${(painting.title || 'artwork').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'artwork'}.jpg`;
+  const downloadName =
+    `${(painting.title || 'artwork')
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase() || 'artwork'}.jpg`;
 
   const handleDownload = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!rawImageUrl) return;
+
     const link = document.createElement('a');
-    link.href = `${API_BASE}/api/paintings/download?url=${encodeURIComponent(rawImageUrl)}&name=${encodeURIComponent(painting.title || 'artwork')}`;
+
+    link.href =
+      `${API_BASE}/api/paintings/download` +
+      `?url=${encodeURIComponent(rawImageUrl)}` +
+      `&name=${encodeURIComponent(painting.title || 'artwork')}`;
+
     link.download = downloadName;
+
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -82,54 +130,83 @@ export default function PaintingCard({ painting }) {
   const handleFavoriteClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
+
     if (!paintingId) return;
 
-    // Mark that we're toggling to prevent useEffect from overriding
     isTogglingRef.current = true;
 
-    // Optimistic UI update - immediately change heart color
-    setLocalIsFav(!localIsFav);
+    // Optimistic update
+    setLocalIsFav((current) => !current);
 
-    const res = await toggleFavorite(paintingId);
-    if (res && res.requireAuth) {
-      alert('Please sign in to save your favorite artworks.');
-      setLocalIsFav(isFav); // Revert if authentication required
-    } else if (res && !res.success) {
-      setLocalIsFav(isFav); // Revert if API call failed
+    try {
+      const res = await toggleFavorite(paintingId);
+
+      if (res?.requireAuth) {
+        alert('Please sign in to save your favorite artworks.');
+        setLocalIsFav(isFav);
+      } else if (res && !res.success) {
+        setLocalIsFav(isFav);
+      }
+    } catch (error) {
+      console.error('Favorite error:', error);
+      setLocalIsFav(isFav);
     }
 
-    // Allow useEffect to sync again after a short delay
     setTimeout(() => {
       isTogglingRef.current = false;
     }, 100);
   };
 
   return (
-    <article className="painting-card" id={`painting-${paintingId}`} tabIndex="-1">
+    <article
+      className="painting-card"
+      id={`painting-${paintingId}`}
+      tabIndex="-1"
+    >
       <Link
         to={`/painting/${paintingId}`}
         state={{ from: sourceLocation }}
         className="painting-card-link"
-        style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', flex: 1 }}
+        style={{
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1
+        }}
       >
         <div className="painting-card-image-wrapper">
           <img
-            src={imageUrl}
-            alt={painting.title}
+            src={primaryImageUrl || '/artwork-fallback.svg'}
+            alt={painting.title || 'Artwork'}
             loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"
             onError={handleImageError}
           />
+
           <button
             type="button"
             className={`painting-fav-btn ${localIsFav ? 'active' : ''}`}
             onClick={handleFavoriteClick}
-            aria-label={localIsFav ? `Remove ${painting.title || 'artwork'} from favorites` : `Add ${painting.title || 'artwork'} to favorites`}
-            title={localIsFav ? "Remove from favorites" : "Add to favorites"}
+            aria-label={
+              localIsFav
+                ? `Remove ${painting.title || 'artwork'} from favorites`
+                : `Add ${painting.title || 'artwork'} to favorites`
+            }
+            title={
+              localIsFav
+                ? 'Remove from favorites'
+                : 'Add to favorites'
+            }
           >
-            {localIsFav ? <FaHeart color="#ff477e" /> : <FaRegHeart />}
+            {localIsFav ? (
+              <FaHeart color="#ff477e" />
+            ) : (
+              <FaRegHeart />
+            )}
           </button>
+
           <button
             type="button"
             className="painting-download-btn"
@@ -144,13 +221,31 @@ export default function PaintingCard({ painting }) {
 
         <div className="painting-card-content">
           <div className="painting-card-tags">
-            {painting.category && <span className="tag category-tag">{painting.category}</span>}
-            {painting.colorMedium && <span className="tag medium-tag">{painting.colorMedium}</span>}
+            {painting.category && (
+              <span className="tag category-tag">
+                {painting.category}
+              </span>
+            )}
+
+            {painting.colorMedium && (
+              <span className="tag medium-tag">
+                {painting.colorMedium}
+              </span>
+            )}
           </div>
-          <h3 className="painting-card-title">{painting.title}</h3>
-          {painting.artist && <p className="painting-card-artist">{painting.artist}</p>}
+
+          <h3 className="painting-card-title">
+            {painting.title}
+          </h3>
+
+          {painting.artist && (
+            <p className="painting-card-artist">
+              {painting.artist}
+            </p>
+          )}
         </div>
       </Link>
     </article>
   );
 }
+
