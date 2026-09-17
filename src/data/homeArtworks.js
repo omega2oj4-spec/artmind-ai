@@ -11,6 +11,72 @@ export const homeArtworks = [
   },
 
   {
+    id: 'gen-autumn-forest',
+    src: '/artworks/gen-autumn-forest.jpg',
+    title: 'Autumn Forest Path',
+    artist: 'AI Generated',
+    category: 'Nature',
+    style: 'Impressionism',
+    colorMedium: 'Oil',
+    tags: ['oil', 'nature', 'autumn', 'forest', 'impressionism', 'landscape', 'leaves']
+  },
+
+  {
+    id: 'gen-venetian-canal',
+    src: '/artworks/gen-venetian-canal.jpg',
+    title: 'Venice at Golden Hour',
+    artist: 'AI Generated',
+    category: 'Landscape',
+    style: 'Impressionism',
+    colorMedium: 'Oil',
+    tags: ['oil', 'venice', 'canal', 'gondola', 'italy', 'landscape', 'impressionism', 'water']
+  },
+
+  {
+    id: 'gen-poppy-field',
+    src: '/artworks/gen-poppy-field.jpg',
+    title: 'Poppy Field in Summer',
+    artist: 'AI Generated',
+    category: 'Flower',
+    style: 'Impressionism',
+    colorMedium: 'Oil',
+    tags: ['oil', 'poppies', 'flowers', 'field', 'summer', 'impressionism', 'red', 'monet']
+  },
+
+  {
+    id: 'gen-renaissance-angel',
+    src: '/artworks/gen-renaissance-angel.jpg',
+    title: 'The Descending Angel',
+    artist: 'AI Generated',
+    category: 'Religious',
+    style: 'Renaissance',
+    colorMedium: 'Oil',
+    tags: ['oil', 'angel', 'religious', 'renaissance', 'heaven', 'divine', 'gold']
+  },
+
+  {
+    id: 'gen-abstract-colors',
+    src: '/artworks/gen-abstract-colors.jpg',
+    title: 'Chromatic Explosion',
+    artist: 'AI Generated',
+    category: 'Abstract',
+    style: 'Abstract Expressionism',
+    colorMedium: 'Oil',
+    tags: ['oil', 'abstract', 'expressionism', 'color', 'dynamic', 'modern', 'bold']
+  },
+
+  {
+    id: 'gen-cherry-blossom',
+    src: '/artworks/gen-cherry-blossom.jpg',
+    title: 'Cherry Blossom Garden',
+    artist: 'AI Generated',
+    category: 'Nature',
+    style: 'Impressionism',
+    colorMedium: 'Oil',
+    tags: ['oil', 'cherry', 'blossom', 'japan', 'garden', 'spring', 'pink', 'nature']
+  },
+
+  {
     id: 'home-persistence-of-memory',
     src: '/artworks/rec-starry-abstract.jpg',
     title: 'The Persistence of Memory',

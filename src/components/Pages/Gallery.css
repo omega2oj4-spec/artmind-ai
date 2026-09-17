@@ -417,3 +417,34 @@
 .empty-icon {
   margin-bottom: 20px;
 }
+
+/* -- Mobile Show More / Show Less ------------------------------------------------ */
+.gallery-show-more-wrap {
+  display: none;
+  justify-content: center;
+  margin: 24px 0 16px;
+}
+
+.gallery-show-more-btn {
+  background: transparent;
+  border: 2px solid #c8a951;
+  color: #c8a951;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 10px 28px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.gallery-show-more-btn:hover {
+  background: #c8a951;
+  color: #1a1a2e;
+}
+
+@media (max-width: 768px) {
+  .gallery-show-more-wrap {
+    display: flex;
+  }
+}

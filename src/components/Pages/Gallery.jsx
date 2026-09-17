@@ -98,6 +98,19 @@ export default function Gallery() {
       'All Mediums'
   );
 
+  /* Mobile show-more/less — only active on small screens (≤768px) */
+  const MOBILE_INITIAL_COUNT = 5;
+  const [mobileExpanded, setMobileExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= 768
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const [
     selectedPaintingType,
     setSelectedPaintingType
@@ -1201,30 +1214,50 @@ export default function Gallery() {
 
       ) : filteredPaintings.length > 0 ? (
 
-        <div
-          className="gallery-grid"
-          ref={galleryGridRef}
-        >
+        <>
+          <div
+            className="gallery-grid"
+            ref={galleryGridRef}
+          >
 
-          {filteredPaintings.map(
-            (painting) => (
-              <PaintingCard
-                key={
-                  painting._id ||
-                  painting.id ||
-                  painting.catalogId ||
-                  (
-                    painting.src ||
-                    painting.imageUrl ||
-                    ''
-                  ).split('?')[0]
-                }
-                painting={painting}
-              />
-            )
+            {(isMobile && !mobileExpanded
+              ? filteredPaintings.slice(0, MOBILE_INITIAL_COUNT)
+              : filteredPaintings
+            ).map(
+              (painting) => (
+                <PaintingCard
+                  key={
+                    painting._id ||
+                    painting.id ||
+                    painting.catalogId ||
+                    (
+                      painting.src ||
+                      painting.imageUrl ||
+                      ''
+                    ).split('?')[0]
+                  }
+                  painting={painting}
+                />
+              )
+            )}
+
+          </div>
+
+          {/* Show More / Show Less — mobile only */}
+          {isMobile && filteredPaintings.length > MOBILE_INITIAL_COUNT && (
+            <div className="gallery-show-more-wrap">
+              <button
+                type="button"
+                className="gallery-show-more-btn"
+                onClick={() => setMobileExpanded((prev) => !prev)}
+              >
+                {mobileExpanded
+                  ? '▲ Show Less'
+                  : `▼ Show More (${filteredPaintings.length - MOBILE_INITIAL_COUNT} more)`}
+              </button>
+            </div>
           )}
-
-        </div>
+        </>
 
       ) : (
 
