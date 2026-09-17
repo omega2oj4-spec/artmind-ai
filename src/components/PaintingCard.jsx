@@ -79,6 +79,9 @@ export default function PaintingCard({ painting }) {
       fallbackImageUrl &&
       image.src !== fallbackImageUrl
     ) {
+      console.warn(
+        `[PaintingCard] Primary image load failed for "${painting.title || 'Untitled'}": ${image.src}`
+      );
       image.dataset.triedThumbnail = 'true';
       image.src = fallbackImageUrl;
       return;
@@ -88,6 +91,9 @@ export default function PaintingCard({ painting }) {
      * Final fallback:
      * Local SVG. No more external requests.
      */
+    console.warn(
+      `[PaintingCard] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}`
+    );
     image.onerror = null;
     image.src = '/artwork-fallback.svg';
   };

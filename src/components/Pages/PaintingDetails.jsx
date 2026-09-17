@@ -262,10 +262,16 @@ export default function PaintingDetails() {
                 // Skip the raw-URL fallback; go straight to the LQIP thumbnail.
                 const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail;
                 if (!image.dataset.triedThumbnail && thumbnailUrl) {
+                  console.warn(
+                    `[PaintingDetails] Primary image load failed for "${painting.title || 'Untitled'}": ${image.src}`
+                  );
                   image.dataset.triedThumbnail = 'true';
                   image.src = thumbnailUrl;
                   return;
                 }
+                console.warn(
+                  `[PaintingDetails] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}`
+                );
                 image.onerror = null;
                 image.src = '/artwork-fallback.svg';
               }}

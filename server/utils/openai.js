@@ -1,14 +1,15 @@
 import OpenAI from 'openai';
 
-// The chat service uses the OpenAI API directly. The previous Gemini endpoint
-// was configured with a placeholder key, so every chat request failed before a
-// response could be generated.
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+// Uses Gemini via its OpenAI-compatible endpoint to optimize billing.
+const openai = process.env.GEMINI_API_KEY
+  ? new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    })
   : null;
 
-const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
-const VISION_MODEL = process.env.OPENAI_VISION_MODEL || 'gpt-4o-mini';
+const CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gemini-3.6-flash';
+const VISION_MODEL = process.env.OPENAI_VISION_MODEL || 'gemini-3.6-flash';
 
 const PORTAL_DESTINATIONS = [
   { path: '/gallery', label: 'Open Gallery', terms: ['gallery', 'browse collection'] },

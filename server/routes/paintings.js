@@ -202,6 +202,9 @@ router.get('/proxy-image', async (req, res) => {
       imageUrl.hostname
     )
   ) {
+    console.error(
+      `[ImageProxy] Host rejected: ${imageUrl.hostname} is not in ALLOWED_IMAGE_HOSTS`
+    );
     return res.status(400).json({
       error: 'Image host not allowed'
     });
@@ -295,8 +298,8 @@ router.get('/proxy-image', async (req, res) => {
     clearTimeout(timeout);
 
     if (!imageResponse.ok) {
-      console.warn(
-        `[ImageProxy] ${imageUrl.hostname} returned ${imageResponse.status}`
+      console.error(
+        `[ImageProxy] Upstream image fetch failed for host ${imageUrl.hostname}: status ${imageResponse.status} ${imageResponse.statusText}`
       );
 
       return res.status(502).json({

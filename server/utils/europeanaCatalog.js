@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Europeana API integration - European museum collections.
  * Free tier: 100 req/s, no auth needed for basic searches.
  * Docs: https://api.europeana.eu/
@@ -106,10 +106,17 @@ export async function fetchEuropeanaArtworks({ query = "painting", limit = 50 } 
     });
 
     const res = await fetch(`${EUROPEANA_BASE}?${params}`, { signal: controller.signal });
-    if (!res.ok) throw new Error(`Europeana API returned ${res.status}`);
+    if (!res.ok) {
+      console.error(`[Europeana] Fetch failed for query "${query}": status ${res.status} - ${res.statusText}`);
+      throw new Error(`Europeana API returned status ${res.status}`);
+    }
     const body = await res.json();
 
     return (body.items || []).map(normalizeEuropeanaItem).filter(Boolean);
+  } catch (err) {
+    const status = err.status || err.statusCode || (err.message.match(/status (\d+)/)?.[1] || 'N/A');
+    console.error(`[Europeana] Error fetching query "${query}": status ${status} - ${err.message}`);
+    throw err;
   } finally {
     clearTimeout(timeout);
   }

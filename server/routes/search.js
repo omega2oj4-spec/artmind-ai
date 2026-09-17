@@ -382,12 +382,18 @@ async function getRankedResults(
    * Re-rank the combined results so that the final
    * ordering is based on the same relevance system.
    */
-  return rankPaintings(
+  const finalRanked = rankPaintings(
     combined,
     query,
     parsed,
     FINAL_RESULT_LIMIT
   );
+
+  console.log(
+    `[Search] Results breakdown for "${query}": ${externalRanked.length} from external discovery vs ${databaseResults.length} from MongoDB smartSearch (${finalRanked.length} final ranked)`
+  );
+
+  return finalRanked;
 }
 
 

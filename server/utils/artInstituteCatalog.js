@@ -248,9 +248,11 @@ export async function fetchArtInstituteArtworks({
     );
 
     if (!response.ok) {
-      throw new Error(
-        `Art Institute API returned ${response.status}`
+      const errMessage = `Art Institute API returned status ${response.status}`;
+      console.error(
+        `[Art Institute] Fetch failed for query "${query}": status ${response.status} - ${response.statusText || errMessage}`
       );
+      throw new Error(errMessage);
     }
 
     const body = await response.json();
@@ -259,6 +261,12 @@ export async function fetchArtInstituteArtworks({
       .map(normalizeArtInstituteArtwork)
       .filter(Boolean);
 
+  } catch (err) {
+    const status = err.status || err.statusCode || (err.message.match(/status (\d+)/)?.[1] || 'N/A');
+    console.error(
+      `[Art Institute] Fetch error for query "${query}": status ${status} - ${err.message}`
+    );
+    throw err;
   } finally {
     clearTimeout(timeout);
   }

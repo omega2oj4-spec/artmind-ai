@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Metropolitan Museum of Art - public API integration.
  * No API key required. Docs: https://metmuseum.github.io/
  */
@@ -87,7 +87,10 @@ export async function fetchMetMuseumArtworks({ query = "painting", limit = 50 } 
     });
 
     const searchRes = await fetch(`${MET_BASE}/search?${searchParams}`, { signal: controller.signal });
-    if (!searchRes.ok) throw new Error(`Met search returned ${searchRes.status}`);
+    if (!searchRes.ok) {
+      console.error(`[Met Museum] Search fetch failed for query "${query}": status ${searchRes.status} - ${searchRes.statusText}`);
+      throw new Error(`Met search returned status ${searchRes.status}`);
+    }
     const searchBody = await searchRes.json();
 
     const objectIds = (searchBody.objectIDs || []).slice(0, limit);
@@ -101,10 +104,14 @@ export async function fetchMetMuseumArtworks({ query = "painting", limit = 50 } 
       const detailPromises = batch.map(async (id) => {
         try {
           const detailRes = await fetch(`${MET_BASE}/objects/${id}`, { signal: controller.signal });
-          if (!detailRes.ok) return null;
+          if (!detailRes.ok) {
+            console.error(`[Met Museum] Object detail fetch failed for ID ${id} (query "${query}"): status ${detailRes.status} ${detailRes.statusText}`);
+            return null;
+          }
           const obj = await detailRes.json();
           return normalizeMetArtwork(obj);
-        } catch {
+        } catch (detailErr) {
+          console.error(`[Met Museum] Object detail error for ID ${id} (query "${query}"): status ${detailErr.status || detailErr.statusCode || 'N/A'} - ${detailErr.message}`);
           return null;
         }
       });
@@ -113,6 +120,10 @@ export async function fetchMetMuseumArtworks({ query = "painting", limit = 50 } 
     }
 
     return results;
+  } catch (err) {
+    const status = err.status || err.statusCode || (err.message.match(/status (\d+)/)?.[1] || 'N/A');
+    console.error(`[Met Museum] Error fetching query "${query}": status ${status} - ${err.message}`);
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
