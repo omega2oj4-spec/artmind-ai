@@ -57,8 +57,21 @@ const CarouselItem = ({ art }) => {
       return;
     }
 
+    if (
+      !image.dataset.triedDirect &&
+      rawUrl &&
+      image.src !== rawUrl
+    ) {
+      console.warn(
+        `[Home Carousel] Thumbnail fallback load failed for "${artwork.title || 'Untitled'}": ${image.src}, trying direct URL`
+      );
+      image.dataset.triedDirect = 'true';
+      image.src = rawUrl;
+      return;
+    }
+
     console.warn(
-      `[Home Carousel] Thumbnail fallback load failed for "${artwork.title || 'Untitled'}": ${image.src}, using local fallback`
+      `[Home Carousel] All image attempts failed for "${artwork.title || 'Untitled'}": ${image.src}, using local fallback`
     );
     image.onerror = null;
     image.src = '/artwork-fallback.svg';

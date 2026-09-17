@@ -260,6 +260,7 @@ export default function PaintingDetails() {
                 const image = event.currentTarget;
                 const thumbnailUrl = painting.thumbnailUrl || painting.thumbnail;
                 const fallbackImageUrl = thumbnailUrl ? proxyImageUrl(thumbnailUrl) : '';
+                const rawUrl = getArtworkImageUrl(painting);
 
                 if (
                   !image.dataset.triedThumbnail &&
@@ -274,8 +275,21 @@ export default function PaintingDetails() {
                   return;
                 }
 
+                if (
+                  !image.dataset.triedDirect &&
+                  rawUrl &&
+                  image.src !== rawUrl
+                ) {
+                  console.warn(
+                    `[PaintingDetails] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}, trying direct URL`
+                  );
+                  image.dataset.triedDirect = 'true';
+                  image.src = rawUrl;
+                  return;
+                }
+
                 console.warn(
-                  `[PaintingDetails] Thumbnail fallback load failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
+                  `[PaintingDetails] All image attempts failed for "${painting.title || 'Untitled'}": ${image.src}, using local fallback`
                 );
                 image.onerror = null;
                 image.src = '/artwork-fallback.svg';
