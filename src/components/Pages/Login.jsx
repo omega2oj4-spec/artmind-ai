@@ -79,8 +79,10 @@ export default function Login() {
 
         <section className="auth-form-panel">
           <div className="auth-header">
-            <div className="auth-header-icon"><FaPalette /></div>
-            <h2>Welcome back</h2>
+            <div className="auth-header-title-row">
+              <div className="auth-header-icon"><FaPalette /></div>
+              <h2>Welcome back</h2>
+            </div>
             <p>Sign in to continue curating your collection.</p>
           </div>
 
