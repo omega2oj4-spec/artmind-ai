@@ -92,7 +92,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
-            <label htmlFor="login-email">login id</label>
+            <label htmlFor="login-email">Login ID</label>
             <div className="auth-input-wrapper">
               <FaUser className="auth-input-icon" />
               <input
