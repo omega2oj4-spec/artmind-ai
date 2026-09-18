@@ -836,6 +836,7 @@ export default function Gallery() {
 
         <form
           className="search-container"
+          style={{ marginBottom: '16px' }}
           onSubmit={
             handleSearchSubmit
           }
@@ -843,12 +844,10 @@ export default function Gallery() {
 
           <div className="search-input-wrapper">
 
-            <FaSearch className="search-icon" />
-
             <input
               type="text"
               className="nl-search-input"
-              placeholder="Search artworks by title, artist, or description..."
+              placeholder=""
               value={searchQuery}
               onChange={(e) =>
                 setSearchQuery(
