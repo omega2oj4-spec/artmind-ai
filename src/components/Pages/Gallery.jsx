@@ -47,12 +47,10 @@ export default function Gallery() {
   /*
    * LOCAL-FIRST GALLERY
    *
-   * The Gallery starts with homeArtworks immediately.
-   * It does not wait for MongoDB, Art Institute,
-   * Met Museum, or any external catalog.
+   * Gallery starts with homeArtworks immediately.
+   * It does not wait for MongoDB or external catalogs.
    */
-  const [paintings] =
-    useState(homeArtworks);
+  const [paintings] = useState(homeArtworks);
 
   const [filterOptions, setFilterOptions] =
     useState({
@@ -98,17 +96,36 @@ export default function Gallery() {
       'All Mediums'
   );
 
-  /* Mobile show-more/less — only active on small screens (≤768px) */
+  /* Mobile show-more/less */
   const MOBILE_INITIAL_COUNT = 5;
-  const [mobileExpanded, setMobileExpanded] = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth <= 768
-  );
+
+  const [mobileExpanded, setMobileExpanded] =
+    useState(false);
+
+  const [isMobile, setIsMobile] =
+    useState(
+      () =>
+        typeof window !== 'undefined' &&
+        window.innerWidth <= 768
+    );
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const onResize = () => {
+      setIsMobile(
+        window.innerWidth <= 768
+      );
+    };
+
+    window.addEventListener(
+      'resize',
+      onResize
+    );
+
+    return () =>
+      window.removeEventListener(
+        'resize',
+        onResize
+      );
   }, []);
 
   const [
@@ -126,16 +143,14 @@ export default function Gallery() {
     setScrollToCategoryResults
   ] = useState(false);
 
-  const resultsRef = useRef(null);
+  const resultsRef =
+    useRef(null);
 
   const galleryGridRef =
     useRef(null);
 
   /*
    * Build filter options from local artwork data.
-   *
-   * This means the Gallery does not need the
-   * backend just to populate its filters.
    */
   useEffect(() => {
     const categories = [
@@ -171,14 +186,6 @@ export default function Gallery() {
       )
     ].sort();
 
-    /*
-     * Your current homeArtworks data does not
-     * consistently contain "surface".
-     *
-     * Keep a useful default list so the filter
-     * remains available when database artworks
-     * are added later.
-     */
     const surfaces = [
       ...new Set(
         homeArtworks
@@ -205,7 +212,7 @@ export default function Gallery() {
   }, []);
 
   /*
-   * Reset document scrolling when returning
+   * Reset scrolling when returning
    * from a painting details page.
    */
   useEffect(() => {
@@ -239,7 +246,9 @@ export default function Gallery() {
    * Return to the embedded dashboard gallery.
    */
   useEffect(() => {
-    if (location.hash !== '#gallery') {
+    if (
+      location.hash !== '#gallery'
+    ) {
       return;
     }
 
@@ -328,7 +337,9 @@ export default function Gallery() {
       !surface &&
       selectedSurface !== 'All Surfaces'
     ) {
-      setSelectedSurface('All Surfaces');
+      setSelectedSurface(
+        'All Surfaces'
+      );
     }
 
     if (
@@ -352,160 +363,139 @@ export default function Gallery() {
 
   /*
    * LOCAL FILTERING
-   *
-   * This is the important part.
-   *
-   * We filter homeArtworks in the browser
-   * instead of requesting the external catalog
-   * every time a filter changes.
    */
-  const filteredPaintings = useMemo(() => {
-    const query =
-      searchQuery
-        .trim()
-        .toLowerCase();
+  const filteredPaintings =
+    useMemo(() => {
+      const query =
+        searchQuery
+          .trim()
+          .toLowerCase();
 
-    return homeArtworks.filter(
-      (painting) => {
-        /*
-         * CATEGORY
-         */
-        if (
-          activeCategory !== 'All'
-        ) {
+      return paintings.filter(
+        (painting) => {
+
+          /* CATEGORY */
           if (
-            painting.category?.toLowerCase() !==
-            activeCategory.toLowerCase()
+            activeCategory !== 'All'
           ) {
-            return false;
+            if (
+              painting.category?.toLowerCase() !==
+              activeCategory.toLowerCase()
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * PAINTING TYPE
-         */
-        if (
-          selectedPaintingType !==
-          'All Types'
-        ) {
+          /* PAINTING TYPE */
           if (
-            painting.category?.toLowerCase() !==
-            selectedPaintingType.toLowerCase()
+            selectedPaintingType !==
+            'All Types'
           ) {
-            return false;
+            if (
+              painting.category?.toLowerCase() !==
+              selectedPaintingType.toLowerCase()
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * STYLE
-         */
-        if (
-          selectedStyle !==
-          'All Styles'
-        ) {
+          /* STYLE */
           if (
-            painting.style?.toLowerCase() !==
-            selectedStyle.toLowerCase()
+            selectedStyle !==
+            'All Styles'
           ) {
-            return false;
+            if (
+              painting.style?.toLowerCase() !==
+              selectedStyle.toLowerCase()
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * SURFACE
-         */
-        if (
-          selectedSurface !==
-          'All Surfaces'
-        ) {
+          /* SURFACE */
           if (
-            painting.surface?.toLowerCase() !==
-            selectedSurface.toLowerCase()
+            selectedSurface !==
+            'All Surfaces'
           ) {
-            return false;
+            if (
+              painting.surface?.toLowerCase() !==
+              selectedSurface.toLowerCase()
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * COLOR MEDIUM
-         */
-        if (
-          selectedColorMedium !==
-          'All Mediums'
-        ) {
+          /* COLOR MEDIUM */
           if (
-            painting.colorMedium?.toLowerCase() !==
-            selectedColorMedium.toLowerCase()
+            selectedColorMedium !==
+            'All Mediums'
           ) {
-            return false;
+            if (
+              painting.colorMedium?.toLowerCase() !==
+              selectedColorMedium.toLowerCase()
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * POPULARITY
-         *
-         * Local artwork does not always have
-         * popularity, so only apply this when
-         * the artwork has a popularity value.
-         */
-        if (
-          selectedPopularity !==
-          'Any Popularity'
-        ) {
-          const popularity =
-            Number(
-              painting.popularity || 0
-            );
-
+          /* POPULARITY */
           if (
-            popularity <
-            Number(
-              selectedPopularity
-            )
+            selectedPopularity !==
+            'Any Popularity'
           ) {
-            return false;
+            const popularity =
+              Number(
+                painting.popularity || 0
+              );
+
+            if (
+              popularity <
+              Number(
+                selectedPopularity
+              )
+            ) {
+              return false;
+            }
           }
-        }
 
-        /*
-         * SEARCH
-         */
-        if (query) {
-          const searchableText = [
-            painting.title,
-            painting.artist,
-            painting.description,
-            painting.category,
-            painting.style,
-            painting.colorMedium,
-            painting.surface,
-            ...(painting.tags || [])
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase();
+          /* SEARCH */
+          if (query) {
+            const searchableText = [
+              painting.title,
+              painting.artist,
+              painting.description,
+              painting.category,
+              painting.style,
+              painting.colorMedium,
+              painting.surface,
+              ...(painting.tags || [])
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase();
 
-          if (
-            !searchableText.includes(
-              query
-            )
-          ) {
-            return false;
+            if (
+              !searchableText.includes(
+                query
+              )
+            ) {
+              return false;
+            }
           }
-        }
 
-        return true;
-      }
-    );
-  }, [
-    activeCategory,
-    searchQuery,
-    selectedStyle,
-    selectedSurface,
-    selectedColorMedium,
-    selectedPaintingType,
-    selectedPopularity
-  ]);
+          return true;
+        }
+      );
+    }, [
+      paintings,
+      activeCategory,
+      searchQuery,
+      selectedStyle,
+      selectedSurface,
+      selectedColorMedium,
+      selectedPaintingType,
+      selectedPopularity
+    ]);
 
   /*
    * Scroll to painting from URL hash.
@@ -577,9 +567,7 @@ export default function Gallery() {
   ]);
 
   /*
-   * Save user's search to MongoDB.
-   *
-   * This does NOT control the Gallery results.
+   * Save search history.
    */
   const saveSearchHistory = async (
     query
@@ -623,10 +611,6 @@ export default function Gallery() {
         )
       );
     } catch (err) {
-      /*
-       * Search history failing should never
-       * break the Gallery.
-       */
       console.error(
         'Error saving search history:',
         err
@@ -674,9 +658,6 @@ export default function Gallery() {
       const query =
         searchQuery.trim();
 
-      /*
-       * Empty search.
-       */
       if (!query) {
         const newParams =
           new URLSearchParams(
@@ -694,11 +675,6 @@ export default function Gallery() {
         return;
       }
 
-      /*
-       * Save search history,
-       * but do not make it necessary
-       * for search results.
-       */
       await saveSearchHistory(
         query
       );
@@ -785,6 +761,8 @@ export default function Gallery() {
         newParams
       );
 
+      setMobileExpanded(false);
+
       setScrollToCategoryResults(
         true
       );
@@ -798,9 +776,17 @@ export default function Gallery() {
     setSearchQuery('');
     setSelectedStyle('All Styles');
     setSelectedSurface('All Surfaces');
-    setSelectedColorMedium('All Mediums');
-    setSelectedPaintingType('All Types');
-    setSelectedPopularity('Any Popularity');
+    setSelectedColorMedium(
+      'All Mediums'
+    );
+    setSelectedPaintingType(
+      'All Types'
+    );
+    setSelectedPopularity(
+      'Any Popularity'
+    );
+
+    setMobileExpanded(false);
 
     setSearchParams({});
 
@@ -836,7 +822,9 @@ export default function Gallery() {
 
         <form
           className="search-container"
-          style={{ marginBottom: '16px' }}
+          style={{
+            marginBottom: '16px'
+          }}
           onSubmit={
             handleSearchSubmit
           }
@@ -844,10 +832,13 @@ export default function Gallery() {
 
           <div className="search-input-wrapper">
 
+            {/* SMALL SEARCH ICON */}
+            <FaSearch className="search-input-icon" />
+
             <input
               type="text"
               className="nl-search-input"
-              placeholder=""
+              placeholder="Search paintings, artists, styles..."
               value={searchQuery}
               onChange={(e) =>
                 setSearchQuery(
@@ -862,7 +853,11 @@ export default function Gallery() {
             type="submit"
             className="nl-search-btn"
             aria-label="Search"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
           >
             <FaSearch />
             Search
@@ -1198,7 +1193,6 @@ export default function Gallery() {
       </div>
 
       {/* RESULTS */}
-
       {loading &&
       filteredPaintings.length === 0 ? (
 
@@ -1222,7 +1216,10 @@ export default function Gallery() {
           >
 
             {(isMobile && !mobileExpanded
-              ? filteredPaintings.slice(0, MOBILE_INITIAL_COUNT)
+              ? filteredPaintings.slice(
+                  0,
+                  MOBILE_INITIAL_COUNT
+                )
               : filteredPaintings
             ).map(
               (painting) => (
@@ -1244,20 +1241,34 @@ export default function Gallery() {
 
           </div>
 
-          {/* Show More / Show Less — mobile only */}
-          {isMobile && filteredPaintings.length > MOBILE_INITIAL_COUNT && (
-            <div className="gallery-show-more-wrap">
-              <button
-                type="button"
-                className="gallery-show-more-btn"
-                onClick={() => setMobileExpanded((prev) => !prev)}
-              >
-                {mobileExpanded
-                  ? '▲ Show Less'
-                  : `▼ Show More (${filteredPaintings.length - MOBILE_INITIAL_COUNT} more)`}
-              </button>
-            </div>
-          )}
+          {/* SHOW MORE / LESS */}
+          {isMobile &&
+            filteredPaintings.length >
+              MOBILE_INITIAL_COUNT && (
+              <div className="gallery-show-more-wrap">
+
+                <button
+                  type="button"
+                  className="gallery-show-more-btn"
+                  onClick={() =>
+                    setMobileExpanded(
+                      (prev) => !prev
+                    )
+                  }
+                >
+
+                  {mobileExpanded
+                    ? '▲ Show Less'
+                    : `▼ Show More (${
+                        filteredPaintings.length -
+                        MOBILE_INITIAL_COUNT
+                      } more)`}
+
+                </button>
+
+              </div>
+            )}
+
         </>
 
       ) : (
