@@ -1,18 +1,26 @@
 /**
  * Base URL for all API requests.
  *
- * In development: empty string -> Vite proxy handles /api -> localhost:5000
- * In production (Vercel): VITE_API_URL should point to the Render API.
- * The fallback keeps the deployed frontend connected if Vercel has not
- * injected that build-time variable yet.
+ * DEVELOPMENT:
+ * Empty string means Vite handles /api requests through
+ * the proxy configured in vite.config.js.
+ *
+ * PRODUCTION:
+ * Uses VITE_API_URL if it exists.
+ * Otherwise, uses the Render backend URL.
  */
-const API_BASE = import.meta.env.VITE_API_URL
-  || (import.meta.env.PROD ? 'https://artmind-ai-1.onrender.com' : '');
+
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD
+    ? 'https://artmind-ai-1.onrender.com'
+    : '');
 
 /**
- * CDN hosts that block direct browser hotlink requests (403 / broken images).
- * These must be fetched server-side through the proxy endpoint.
- * Keep in sync with ALLOWED_IMAGE_HOSTS in server/routes/paintings.js.
+ * Image hosts that may block direct browser requests.
+ *
+ * These images are fetched through the ArtMind backend
+ * image proxy instead.
  */
 const PROXIED_IMAGE_HOSTS = new Set([
   'www.artic.edu',
@@ -25,29 +33,70 @@ const PROXIED_IMAGE_HOSTS = new Set([
   'images.unsplash.com',
   'upload.wikimedia.org',
   'lh3.googleusercontent.com',
-  // Europeana image hosts
+
+  // Europeana
   'iiif.europeana.eu',
   'europeana-images.s3.amazonaws.com',
   'api.europeana.eu',
 ]);
 
 /**
- * Returns a proxied URL for image sources that need server-side fetching,
- * or the original URL for sources that load fine in the browser directly.
+ * Returns a backend-proxied URL for image sources
+ * that cannot be loaded directly by the browser.
+ *
+ * Local images such as:
+ * /artworks/sunflowers.jpg
+ *
+ * are returned unchanged.
  */
 export function proxyImageUrl(src) {
   if (!src) return '';
+
   try {
     const { hostname } = new URL(src);
+
     if (PROXIED_IMAGE_HOSTS.has(hostname)) {
-      return API_BASE + '/api/paintings/proxy-image?url=' + encodeURIComponent(src);
+      return (
+        API_BASE +
+        '/api/paintings/proxy-image?url=' +
+        encodeURIComponent(src)
+      );
     }
-  } catch { /* not a valid absolute URL - use as-is */ }
+  } catch {
+    // Not an absolute URL.
+    // Return local paths unchanged.
+  }
+
   return src;
 }
 
+/**
+ * Make an API request.
+ *
+ * In localhost development:
+ *
+ *   /api/auth/register
+ *
+ * is sent to Vite, which proxies it to:
+ *
+ *   http://127.0.0.1:5000
+ *
+ * In production:
+ *
+ *   https://artmind-ai-1.onrender.com/api/...
+ */
 export function apiFetch(path, options = {}) {
-  return fetch(`${API_BASE}${path}`, { credentials: 'include', ...options });
+  const url = `${API_BASE}${path}`;
+
+  console.log('[ArtMind API Request]', {
+    method: options.method || 'GET',
+    url,
+  });
+
+  return fetch(url, {
+    credentials: 'include',
+    ...options,
+  });
 }
 
 export default API_BASE;
