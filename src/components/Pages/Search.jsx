@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FaSearch, FaMagic, FaPalette } from 'react-icons/fa';
 import PaintingCard from '../PaintingCard.jsx';
@@ -84,9 +84,6 @@ export default function Search({ embedded = false }) {
     <main id={embedded ? 'dashboard-search' : undefined} className={`search-page-container ${embedded ? 'search-page-embedded' : ''}`}>
       <div className="search-page-header">
         <h1 className="search-page-title"><FaMagic color="#d4af37" /> Intelligent Art Search</h1>
-        <p className="search-page-subtitle">
-          Inquire in natural language. Gemini AI interprets intent, style, medium, and color palette to find matching artworks.
-        </p>
       </div>
 
       <div className="search-page-input-wrapper">

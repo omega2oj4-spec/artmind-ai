@@ -863,7 +863,9 @@ export default function Gallery() {
             type="submit"
             className="nl-search-btn"
             aria-label="Search"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
+            <FaSearch />
             Search
           </button>
 

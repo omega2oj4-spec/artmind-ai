@@ -13,7 +13,7 @@
 .auth-art-content p { max-width: 270px; color: #eee6d9; font-size: .95rem; line-height: 1.6; }
 .auth-panel-label { color: #d4af37; font-size: .67rem; font-weight: 700; letter-spacing: .18em; }
 .auth-form-panel { display: flex; flex-direction: column; justify-content: center; padding: 46px 72px; }
-.auth-header { text-align: center; margin-bottom: 28px; }
+.auth-header { text-align: left; margin-bottom: 28px; }
 .auth-header-icon { width: 54px; height: 54px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; border-radius: 50%; background: #1a1918; color: #d4af37; box-shadow: 0 8px 18px rgba(26,25,24,.18); font-size: 1.35rem; }
 .auth-header h2 { margin: 0 0 8px; color: #1a1918; font-family: 'Playfair Display',Georgia,serif; font-size: 2rem; }
 .auth-header p { color: #777; font-size: .9rem; line-height: 1.5; margin: 0; }
@@ -35,7 +35,7 @@
 .auth-submit-btn { display: flex; align-items: center; justify-content: center; margin-top: 12px; padding: 13px 18px; border: 1px solid #d4af37; border-radius: 24px; background: #1a1918; color: #f8e8b0; cursor: pointer; font: inherit; font-size: .94rem; font-weight: 700; transition: background .2s ease,transform .2s ease; }
 .auth-submit-btn:hover:not(:disabled) { background: #3c342d; transform: translateY(-2px); }
 .auth-submit-btn:disabled { opacity: .55; cursor: not-allowed; }
-.auth-footer-link { margin-top: 24px; padding-top: 18px; border-top: 1px solid #f0eae1; text-align: center; }
+.auth-footer-link { margin-top: 24px; padding-top: 18px; border-top: 1px solid #f0eae1; text-align: left; }
 .auth-footer-link p { margin: 0; color: #666; font-size: .86rem; }
 .auth-footer-link a { color: #8c7355; font-weight: 700; text-decoration: none; }
 .auth-footer-link a:hover { color: #1a1918; text-decoration: underline; }

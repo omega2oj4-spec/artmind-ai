@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaLock, FaSignInAlt, FaPalette, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { AuthContext } from '../../context/AuthContext.jsx';
 import { apiFetch } from '../../utils/api.js';
 import './AuthPages.css';
@@ -90,14 +90,14 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="auth-field">
-            <label htmlFor="login-email">Email Address</label>
+            <label htmlFor="login-email">Login ID</label>
             <div className="auth-input-wrapper">
-              <FaEnvelope className="auth-input-icon" />
+              <FaUser className="auth-input-icon" />
               <input
                 id="login-email"
                 name="email"
                 type="email"
-                placeholder="curator@artmind.ai"
+                placeholder="Enter your login ID"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
